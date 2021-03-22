@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:air_extensions/air_extensions.dart';
+import 'package:air_extensions/air_api.dart';
 
 import 'http.dart';
 import 'inspector.dart';

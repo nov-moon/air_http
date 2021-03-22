@@ -3,6 +3,7 @@ description: A new Flutter package.
 version: 0.0.1
 author: NavMoon
 homepage: https://github.com/NovMoon/AirHttp
+publish_to: none
 
 environment:
   sdk: ">=2.12.0 <3.0.0"
@@ -13,7 +14,9 @@ dependencies:
     sdk: flutter
   http: ^0.13.0
   air_extensions:
-    path: ../air_extensions
+    git:
+      url: https://github.com/NovMoon/AirExtensions.git
+#    path: ../air_extensions
 
 dev_dependencies:
   flutter_test:
