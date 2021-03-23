@@ -25,7 +25,7 @@ class AirHttp with _AirHttpMixin {
   /// 配置通用Host
   ///
   /// 你可以通过[requestType]参数判断当前请求类型，此参数是由[AirRequest.requestType]透传过来的
-  static String Function(int requestType)? hostFactory;
+  static String Function(int? requestType)? hostFactory;
 
   /// 配置通用header
   static Map<String, dynamic> Function(int requestType)? headers;
@@ -69,12 +69,13 @@ class AirHttp with _AirHttpMixin {
   /// 是否每次网络请求都关闭client
   ///
   /// 默认为true，每次网络请求完成后，都会关闭Client。
-  /// 如果设置为false，则在app退出时需要调用closeClient()方法回收资源。
-  static bool isCloseClientEveryTime = true;
+  /// 如果设置为false，则在app退出时需要调用[closeClient]方法回收资源。
+  // static bool isCloseClientEveryTime = true;
 
-  static void closeClient() {
-    _onAppStop();
-  }
+  /// 主动回收当前client。
+  // static void closeClient() {
+  //   _onAppStop();
+  // }
 
   /// 是否打印log
   static set printLog(bool value) {
@@ -123,15 +124,15 @@ class AirHttp with _AirHttpMixin {
     return result;
   }
 
-  static void _onAppStop() {
-    print("_onAppStop_onAppStop");
-    try {
-      EmitterProcessor.httpClient?.close();
-    } catch (e) {
-      print(e);
-    }
-    EmitterProcessor.httpClient = null;
-  }
+// static void _onAppStop() {
+//   print("_onAppStop_onAppStop");
+//   try {
+//     EmitterProcessor.httpClient?.close();
+//   } catch (e) {
+//     print(e);
+//   }
+//   EmitterProcessor.httpClient = null;
+// }
 }
 
 mixin _AirHttpMixin {
@@ -286,6 +287,68 @@ extension AirHttpExtension on String {
   Future<AirResponse> httpPatch([Map<String, dynamic>? params]) {
     AirRequest request = http(params);
     return AirHttp._withRequest(request).patch();
+  }
+}
+
+mixin HttpMixin {
+  AirRequest http(String url, [Map<String, dynamic>? params]) {
+    final http = AirRequest.fromUrl(url, params);
+    ontCreateRequest(http);
+    return http;
+  }
+
+  @protected
+  void ontCreateRequest(AirRequest request) {}
+
+  @protected
+  void ontResponseComplete(AirResponse response) {}
+
+  Future<AirResponse> httpPost(String url,
+      [Map<String, dynamic>? params]) async {
+    AirRequest request = http(url, params);
+    var result = await AirHttp._withRequest(request).post();
+    ontResponseComplete(result);
+    return result;
+  }
+
+  Future<AirResponse> httpGet(String url,
+      [Map<String, dynamic>? params]) async {
+    AirRequest request = http(url, params);
+    var result = await AirHttp._withRequest(request).get();
+    ontResponseComplete(result);
+    return result;
+  }
+
+  Future<AirResponse> httpPut(String url,
+      [Map<String, dynamic>? params]) async {
+    AirRequest request = http(url, params);
+    var result = await AirHttp._withRequest(request).put();
+    ontResponseComplete(result);
+    return result;
+  }
+
+  Future<AirResponse> httpHead(String url,
+      [Map<String, dynamic>? params]) async {
+    AirRequest request = http(url, params);
+    var result = await AirHttp._withRequest(request).head();
+    ontResponseComplete(result);
+    return result;
+  }
+
+  Future<AirResponse> httpDelete(String url,
+      [Map<String, dynamic>? params]) async {
+    AirRequest request = http(url, params);
+    var result = await AirHttp._withRequest(request).delete();
+    ontResponseComplete(result);
+    return result;
+  }
+
+  Future<AirResponse> httpPatch(String url,
+      [Map<String, dynamic>? params]) async {
+    AirRequest request = http(url, params);
+    var result = await AirHttp._withRequest(request).patch();
+    ontResponseComplete(result);
+    return result;
   }
 }
 

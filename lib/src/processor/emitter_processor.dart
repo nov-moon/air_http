@@ -9,38 +9,41 @@ import 'package:http/http.dart';
 
 /// 真正的请求发射位置
 class EmitterProcessor implements HttpProcessor {
-  static Client? httpClient = new Client();
-
   @override
   Future<AirRawResponse> process(ProcessorNode node) async {
-    final client = httpClient ??= new Client();
     var request = node.request;
+    final client = request.httpClient = new Client();
     AirRawResponse response;
     Response rawResponse;
-    switch (request.method) {
-      case Method.GET:
-        rawResponse = await gets(client.get, request);
-        break;
-      case Method.HEAD:
-        rawResponse = await gets(client.head, request);
-        break;
-      case Method.DELETE:
-        rawResponse = await gets(client.delete, request);
-        break;
-      case Method.POST:
-        rawResponse = await posts(client.post, request);
-        break;
-      case Method.PUT:
-        rawResponse = await posts(client.put, request);
-        break;
-      case Method.PATCH:
-        rawResponse = await posts(client.patch, request);
-        break;
+
+    try {
+      switch (request.method) {
+        case Method.GET:
+          rawResponse = await gets(client.get, request);
+          break;
+        case Method.HEAD:
+          rawResponse = await gets(client.head, request);
+          break;
+        case Method.DELETE:
+          rawResponse = await gets(client.delete, request);
+          break;
+        case Method.POST:
+          rawResponse = await posts(client.post, request);
+          break;
+        case Method.PUT:
+          rawResponse = await posts(client.put, request);
+          break;
+        case Method.PATCH:
+          rawResponse = await posts(client.patch, request);
+          break;
+      }
+    } finally {
+      request.close();
     }
 
-    if (AirHttp.isCloseClientEveryTime) {
-      client.close();
-    }
+    // if (AirHttp.isCloseClientEveryTime) {
+    //   client.close();
+    // }
 
     response = AirRawResponse.fromResponse(rawResponse);
     return response;

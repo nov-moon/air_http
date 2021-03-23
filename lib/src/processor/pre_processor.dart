@@ -14,7 +14,7 @@ class PreProcessor implements HttpProcessor {
 
     // 处理Host
     if (!request.url.isPathHttp) {
-      var host = raw.host;
+      var host = raw.host ??= AirHttp.hostFactory?.call(raw.requestType);
       if (host?.isEmpty ?? true) {
         throw AirHttpException(message: 'The request dose not have host');
       }

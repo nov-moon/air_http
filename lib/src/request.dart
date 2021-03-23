@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:ui';
 
 import 'package:air_extensions/air_api.dart';
+import 'package:http/http.dart';
 
 import 'http.dart';
 import 'inspector.dart';
@@ -30,6 +32,8 @@ class AirRequest {
 
   /// 当前请求的method
   late Method method;
+
+  late VoidCallback closer;
 
   Map<String, dynamic> _headers = {};
   Map<String, dynamic> _params = {};
@@ -191,10 +195,18 @@ class AirRealRequest {
   Encoding? encoding;
   String url;
   Method method;
+  Client? httpClient;
 
   AirRealRequest(this.raw)
       : headers = raw.getHeaders().toStringMap,
         encoding = raw.encoding,
         url = raw.url,
-        method = raw.method;
+        method = raw.method {
+    raw.closer = close;
+  }
+
+  void close() {
+    httpClient?.close();
+    httpClient = null;
+  }
 }
