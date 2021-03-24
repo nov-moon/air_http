@@ -27,6 +27,9 @@ class AirRequest {
   /// 是否开启gzip
   bool? isGzip;
 
+  /// 当前请求是否使用的UI交互类型，0不使用。一般用于loading弹出、错误时toast等。
+  int uxType = 0;
+
   /// 当前请求编码，一般不用设置
   Encoding? encoding;
 

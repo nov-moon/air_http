@@ -304,48 +304,54 @@ mixin HttpMixin {
   void ontResponseComplete(AirResponse response) {}
 
   Future<AirResponse> httpPost(String url,
-      [Map<String, dynamic>? params]) async {
+      [Map<String, dynamic>? params, int uxType = 1]) async {
     AirRequest request = http(url, params);
+    request.uxType = uxType;
     var result = await AirHttp._withRequest(request).post();
     ontResponseComplete(result);
     return result;
   }
 
   Future<AirResponse> httpGet(String url,
-      [Map<String, dynamic>? params]) async {
+      [Map<String, dynamic>? params, int uxType = 1]) async {
     AirRequest request = http(url, params);
+    request.uxType = uxType;
     var result = await AirHttp._withRequest(request).get();
     ontResponseComplete(result);
     return result;
   }
 
   Future<AirResponse> httpPut(String url,
-      [Map<String, dynamic>? params]) async {
+      [Map<String, dynamic>? params, int uxType = 1]) async {
     AirRequest request = http(url, params);
+    request.uxType = uxType;
     var result = await AirHttp._withRequest(request).put();
     ontResponseComplete(result);
     return result;
   }
 
   Future<AirResponse> httpHead(String url,
-      [Map<String, dynamic>? params]) async {
+      [Map<String, dynamic>? params, int uxType = 1]) async {
     AirRequest request = http(url, params);
+    request.uxType = uxType;
     var result = await AirHttp._withRequest(request).head();
     ontResponseComplete(result);
     return result;
   }
 
   Future<AirResponse> httpDelete(String url,
-      [Map<String, dynamic>? params]) async {
+      [Map<String, dynamic>? params, int uxType = 1]) async {
     AirRequest request = http(url, params);
+    request.uxType = uxType;
     var result = await AirHttp._withRequest(request).delete();
     ontResponseComplete(result);
     return result;
   }
 
   Future<AirResponse> httpPatch(String url,
-      [Map<String, dynamic>? params]) async {
+      [Map<String, dynamic>? params, int uxType = 1]) async {
     AirRequest request = http(url, params);
+    request.uxType = uxType;
     var result = await AirHttp._withRequest(request).patch();
     ontResponseComplete(result);
     return result;
