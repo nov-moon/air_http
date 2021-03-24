@@ -31,8 +31,7 @@ class AirHttp with _AirHttpMixin {
   static Map<String, dynamic> Function(int requestType)? headers;
 
   /// response解析器
-  static Future<AirResponse> Function(AirRawResponse response, int requestType)
-      responseParser = _defaultResponseParser;
+  static AirResponseParser responseParser = AirDefaultParser();
 
   /// exception处理器
   static Function(dynamic exception)? onExceptionOccurred;
@@ -108,20 +107,6 @@ class AirHttp with _AirHttpMixin {
 
   AirHttp._withRequest(AirRequest request) {
     _request = request;
-  }
-
-  static Future<AirResponse> _defaultResponseParser(
-      AirRawResponse response, int requestType) async {
-    final map = jsonDecode(response.body);
-    final result = AirRealResponse();
-    if (map == null) {
-      return result;
-    }
-    result.success = map['success'] ?? false;
-    result.statusCode = map['statusCode'] ?? -1;
-    result.message = map['message'] ?? 'No message.';
-    result.dataRaw = map['data'] ?? {};
-    return result;
   }
 
 // static void _onAppStop() {
@@ -212,7 +197,7 @@ mixin _AirHttpMixin {
         await node.process(node.request).then((response) async {
       // 正常请求的处理
       final result =
-          await AirHttp.responseParser(response, request.requestType ?? 0);
+          await _defaultResponseParser(response, request.requestType ?? 0);
       result.request = request;
       result.httpCode = response.httpCode;
       result.headers = response.headers;
@@ -250,6 +235,20 @@ mixin _AirHttpMixin {
       csResponse = await interceptor.interceptResponse(csResponse);
     }
     return csResponse;
+  }
+
+  Future<AirResponse> _defaultResponseParser(
+      AirRawResponse response, int requestType) async {
+    final map = jsonDecode(response.body);
+    final result = AirRealResponse();
+    if (map == null) {
+      return result;
+    }
+    result.success = AirHttp.responseParser.isSuccess(map, requestType);
+    result.statusCode = AirHttp.responseParser.getStatusCode(map, requestType);
+    result.message = AirHttp.responseParser.getMessage(map, requestType);
+    result.dataRaw = AirHttp.responseParser.getData(map, requestType);
+    return result;
   }
 }
 
@@ -293,22 +292,22 @@ extension AirHttpExtension on String {
 mixin HttpMixin {
   AirRequest http(String url, [Map<String, dynamic>? params]) {
     final http = AirRequest.fromUrl(url, params);
-    ontCreateRequest(http);
+    onCreateRequest(http);
     return http;
   }
 
   @protected
-  void ontCreateRequest(AirRequest request) {}
+  void onCreateRequest(AirRequest request) {}
 
   @protected
-  void ontResponseComplete(AirResponse response) {}
+  void onResponseComplete(AirResponse response) {}
 
   Future<AirResponse> httpPost(String url,
       [Map<String, dynamic>? params, int uxType = 1]) async {
     AirRequest request = http(url, params);
     request.uxType = uxType;
     var result = await AirHttp._withRequest(request).post();
-    ontResponseComplete(result);
+    onResponseComplete(result);
     return result;
   }
 
@@ -317,7 +316,7 @@ mixin HttpMixin {
     AirRequest request = http(url, params);
     request.uxType = uxType;
     var result = await AirHttp._withRequest(request).get();
-    ontResponseComplete(result);
+    onResponseComplete(result);
     return result;
   }
 
@@ -326,7 +325,7 @@ mixin HttpMixin {
     AirRequest request = http(url, params);
     request.uxType = uxType;
     var result = await AirHttp._withRequest(request).put();
-    ontResponseComplete(result);
+    onResponseComplete(result);
     return result;
   }
 
@@ -335,7 +334,7 @@ mixin HttpMixin {
     AirRequest request = http(url, params);
     request.uxType = uxType;
     var result = await AirHttp._withRequest(request).head();
-    ontResponseComplete(result);
+    onResponseComplete(result);
     return result;
   }
 
@@ -344,7 +343,7 @@ mixin HttpMixin {
     AirRequest request = http(url, params);
     request.uxType = uxType;
     var result = await AirHttp._withRequest(request).delete();
-    ontResponseComplete(result);
+    onResponseComplete(result);
     return result;
   }
 
@@ -353,7 +352,7 @@ mixin HttpMixin {
     AirRequest request = http(url, params);
     request.uxType = uxType;
     var result = await AirHttp._withRequest(request).patch();
-    ontResponseComplete(result);
+    onResponseComplete(result);
     return result;
   }
 }

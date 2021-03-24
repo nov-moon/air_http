@@ -4,6 +4,38 @@ import 'package:http/http.dart';
 
 import 'request.dart';
 
+abstract class AirResponseParser {
+  bool isSuccess(Map<String, dynamic> result, int requestType);
+
+  int getStatusCode(Map<String, dynamic> result, int requestType);
+
+  String getMessage(Map<String, dynamic> result, int requestType);
+
+  dynamic getData(Map<String, dynamic> result, int requestType);
+}
+
+class AirDefaultParser implements AirResponseParser {
+  @override
+  getData(Map<String, dynamic> result, int requestType) {
+    return result['data'] ?? {};
+  }
+
+  @override
+  String getMessage(Map<String, dynamic> result, int requestType) {
+    return result['message'] ?? 'No message.';
+  }
+
+  @override
+  int getStatusCode(Map<String, dynamic> result, int requestType) {
+    return result['statusCode'] ?? -1;
+  }
+
+  @override
+  bool isSuccess(Map<String, dynamic> result, int requestType) {
+    return result['success'] ?? false;
+  }
+}
+
 abstract class AirResponse {
   Map<String, String> headers = {};
   int httpCode = 0;
