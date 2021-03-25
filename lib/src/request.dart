@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:ui';
 
 import 'package:air_extensions/air_api.dart';
+import 'package:air_http/src/response.dart';
 import 'package:http/http.dart';
 
 import 'http.dart';
@@ -32,6 +33,9 @@ class AirRequest {
 
   /// 当前request的持有对象，可能为空
   dynamic? requestHolder;
+
+  /// response 解析器
+  AirResponseParser? parser;
 
   /// 是否抛出exception
   bool? isThrowException;

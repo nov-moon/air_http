@@ -22,7 +22,11 @@ typedef InterceptorRequestType = Future<AirRequest> Function(
 typedef InterceptorResponseType = Future<AirResponse> Function(
     AirResponse response);
 
+typedef ResponseParserFactory = AirResponseParser Function(int requestType);
+
 class AirHttp with _AirHttpMixin {
+  static AirDefaultParser _defaultParser = AirDefaultParser();
+
   /// 配置通用Host
   ///
   /// 你可以通过[requestType]参数判断当前请求类型，此参数是由[AirRequest.requestType]透传过来的
@@ -32,7 +36,7 @@ class AirHttp with _AirHttpMixin {
   static Map<String, dynamic> Function(int requestType)? headers;
 
   /// response解析器
-  static AirResponseParser responseParser = AirDefaultParser();
+  static ResponseParserFactory responseParser = (type) => _defaultParser;
 
   /// exception处理器
   static Function(dynamic exception)? onExceptionOccurred;
@@ -196,14 +200,17 @@ mixin _AirHttpMixin {
     processors.add(GzipProcessor());
     processors.add(EmitterProcessor());
 
+    if (request.parser == null) {
+      request.parser = AirHttp.responseParser(request.requestType ?? 0);
+    }
+
     ProcessorNode node =
         _ProcessorNodeImpl(processors, 0, AirRealRequest(request));
 
     AirResponse csResponse =
         await node.process(node.request).then((response) async {
       // 正常请求的处理
-      final result =
-          await _defaultResponseParser(response, request.requestType ?? 0);
+      final result = await _defaultResponseParser(response, request);
       result.request = request;
       result.httpCode = response.httpCode;
       result.headers = response.headers;
@@ -273,16 +280,18 @@ mixin _AirHttpMixin {
   }
 
   Future<AirResponse> _defaultResponseParser(
-      AirRawResponse response, int requestType) async {
+      AirRawResponse response, AirRequest request) async {
     final map = jsonDecode(response.body);
     final result = AirRealResponse();
     if (map == null) {
       return result;
     }
-    result.success = AirHttp.responseParser.isSuccess(map, requestType);
-    result.statusCode = AirHttp.responseParser.getStatusCode(map, requestType);
-    result.message = AirHttp.responseParser.getMessage(map, requestType);
-    result.dataRaw = AirHttp.responseParser.getData(map, requestType);
+    var requestType = request.requestType ?? 0;
+    var parser = request.parser!;
+    result.success = parser.isSuccess(map, requestType);
+    result.statusCode = parser.parseStatusCode(map, requestType);
+    result.message = parser.parseMessage(map, requestType);
+    result.dataRaw = parser.parseData(map, requestType);
     return result;
   }
 }

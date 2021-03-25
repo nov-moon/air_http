@@ -7,27 +7,27 @@ import 'request.dart';
 abstract class AirResponseParser {
   bool isSuccess(Map<String, dynamic> result, int requestType);
 
-  int getStatusCode(Map<String, dynamic> result, int requestType);
+  String parseStatusCode(Map<String, dynamic> result, int requestType);
 
-  String getMessage(Map<String, dynamic> result, int requestType);
+  String parseMessage(Map<String, dynamic> result, int requestType);
 
-  dynamic getData(Map<String, dynamic> result, int requestType);
+  dynamic parseData(Map<String, dynamic> result, int requestType);
 }
 
 class AirDefaultParser implements AirResponseParser {
   @override
-  getData(Map<String, dynamic> result, int requestType) {
+  parseData(Map<String, dynamic> result, int requestType) {
     return result['data'] ?? {};
   }
 
   @override
-  String getMessage(Map<String, dynamic> result, int requestType) {
+  String parseMessage(Map<String, dynamic> result, int requestType) {
     return result['message'] ?? 'No message.';
   }
 
   @override
-  int getStatusCode(Map<String, dynamic> result, int requestType) {
-    return result['statusCode'] ?? -1;
+  String parseStatusCode(Map<String, dynamic> result, int requestType) {
+    return result['code'] ?? '';
   }
 
   @override
@@ -41,12 +41,14 @@ abstract class AirResponse {
   int httpCode = 0;
   AirRequest? request;
   bool success = false;
-  int statusCode = -1;
+  String statusCode = '';
   String message = '';
 
   Map<String, dynamic> get dataMap;
 
   List<dynamic> get dataList;
+
+  bool get failed => !success;
 
   dynamic get dataRaw;
 
