@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:air_extensions/air_api.dart';
+import 'package:air_http/air_http.dart';
 import 'package:air_http/src/processor/body_processor.dart';
 import 'package:air_http/src/processor/cache_processor.dart';
 import 'package:air_http/src/processor/gzip_processor.dart';
@@ -64,6 +65,11 @@ class AirHttp with _AirHttpMixin {
 
   /// 是否开启gzip
   static bool isRequestGzip = false;
+
+  /// 当发生错误，或者请求失败，或者请求结果success=false时，是否抛出错误，默认不抛出。
+  ///
+  /// 如果抛出错误，则错误类型为：[AirHttpException]
+  static bool isThrowException = false;
 
   /// 是否每次网络请求都关闭client
   ///
@@ -203,6 +209,19 @@ mixin _AirHttpMixin {
       result.headers = response.headers;
       return result;
     }).catchError((exception, stack) async {
+      if (exception is AirHttpException) {
+        var resp = exception.response;
+        if (resp == null) {
+          resp = AirRealResponse();
+          resp.request = request;
+          resp.httpCode = -1;
+          if (resp is AirRealResponse) {
+            resp.exception = exception;
+            resp.exceptionStack = stack;
+          }
+        }
+        return resp;
+      }
       // 发生错误时的处理
       AirResponse result = AirRealResponse();
       result.request = request;
@@ -234,6 +253,22 @@ mixin _AirHttpMixin {
     for (var interceptor in request.getInterceptors()) {
       csResponse = await interceptor.interceptResponse(csResponse);
     }
+
+    csResponse.success = false;
+
+    var isThrow = csResponse.request?.isThrowException ?? false;
+    if (isThrow && !csResponse.success) {
+      var e = AirHttpException(message: csResponse.message);
+      e.request = csResponse.request ?? request;
+      e.response = csResponse;
+      if (csResponse is AirRealResponse) {
+        e.rawException = csResponse.exception;
+        e.rawStack = csResponse.exceptionStack;
+      }
+
+      throw e;
+    }
+
     return csResponse;
   }
 
@@ -303,54 +338,78 @@ mixin HttpMixin {
   void onResponseComplete(AirResponse response) {}
 
   Future<AirResponse> httpPost(String url,
-      [Map<String, dynamic>? params, int uxType = 1]) async {
+      [Map<String, dynamic>? params,
+      int? uxType,
+      bool? isThrowException]) async {
     AirRequest request = http(url, params);
-    request.uxType = uxType;
+    request.uxType = uxType ?? 1;
+    request.isThrowException = isThrowException ?? AirHttp.isThrowException;
+    request.requestHolder = this;
     var result = await AirHttp._withRequest(request).post();
     onResponseComplete(result);
     return result;
   }
 
   Future<AirResponse> httpGet(String url,
-      [Map<String, dynamic>? params, int uxType = 1]) async {
+      [Map<String, dynamic>? params,
+      int? uxType,
+      bool? isThrowException]) async {
     AirRequest request = http(url, params);
-    request.uxType = uxType;
+    request.uxType = uxType ?? 1;
+    request.isThrowException = isThrowException ?? AirHttp.isThrowException;
+    request.requestHolder = this;
     var result = await AirHttp._withRequest(request).get();
     onResponseComplete(result);
     return result;
   }
 
   Future<AirResponse> httpPut(String url,
-      [Map<String, dynamic>? params, int uxType = 1]) async {
+      [Map<String, dynamic>? params,
+      int? uxType,
+      bool? isThrowException]) async {
     AirRequest request = http(url, params);
-    request.uxType = uxType;
+    request.uxType = uxType ?? 1;
+    request.isThrowException = isThrowException ?? AirHttp.isThrowException;
+    request.requestHolder = this;
     var result = await AirHttp._withRequest(request).put();
     onResponseComplete(result);
     return result;
   }
 
   Future<AirResponse> httpHead(String url,
-      [Map<String, dynamic>? params, int uxType = 1]) async {
+      [Map<String, dynamic>? params,
+      int? uxType,
+      bool? isThrowException]) async {
     AirRequest request = http(url, params);
-    request.uxType = uxType;
+    request.uxType = uxType ?? 1;
+    request.isThrowException = isThrowException ?? AirHttp.isThrowException;
+    request.requestHolder = this;
     var result = await AirHttp._withRequest(request).head();
     onResponseComplete(result);
     return result;
   }
 
   Future<AirResponse> httpDelete(String url,
-      [Map<String, dynamic>? params, int uxType = 1]) async {
+      [Map<String, dynamic>? params,
+      int? uxType,
+      bool? isThrowException]) async {
     AirRequest request = http(url, params);
-    request.uxType = uxType;
+    request.uxType = uxType ?? 1;
+    request.isThrowException = isThrowException ?? AirHttp.isThrowException;
+    request.requestHolder = this;
     var result = await AirHttp._withRequest(request).delete();
     onResponseComplete(result);
     return result;
   }
 
   Future<AirResponse> httpPatch(String url,
-      [Map<String, dynamic>? params, int uxType = 1]) async {
+      [Map<String, dynamic>? params,
+      int? uxType,
+      bool? isThrowException]) async {
     AirRequest request = http(url, params);
-    request.uxType = uxType;
+    request.uxType = uxType ?? 1;
+    request.isThrowException = isThrowException ?? AirHttp.isThrowException;
+    request.requestHolder = this;
     var result = await AirHttp._withRequest(request).patch();
     onResponseComplete(result);
     return result;

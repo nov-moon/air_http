@@ -30,6 +30,12 @@ class AirRequest {
   /// 当前请求是否使用的UI交互类型，0不使用。一般用于loading弹出、错误时toast等。
   int uxType = 0;
 
+  /// 当前request的持有对象，可能为空
+  dynamic? requestHolder;
+
+  /// 是否抛出exception
+  bool? isThrowException;
+
   /// 当前请求编码，一般不用设置
   Encoding? encoding;
 

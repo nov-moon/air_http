@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:air_extensions/air_api.dart';
+import 'package:air_http/air_http.dart';
 import 'package:air_http/src/http.dart';
 import 'package:air_http/src/response.dart';
 
@@ -25,6 +26,15 @@ class GzipProcessor implements HttpProcessor {
 
     // 处理 param
     final response = await node.process(request);
+    if (response.httpCode < 200 || response.httpCode >= 300) {
+      var e = AirHttpException(code: response.httpCode.toString());
+      var resp = AirRealResponse();
+      resp.httpCode = response.httpCode;
+      resp.headers = response.headers;
+      e.response = resp;
+      e.request = request.raw;
+      throw e;
+    }
     if (response.headers.containsKeyIgnoreCase('Content-Encoding')) {
       final value = response.headers.getValueIgnoreCase('Content-Encoding');
       if (value?.contains("gzip") ?? false) {
