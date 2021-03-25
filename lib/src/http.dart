@@ -261,8 +261,6 @@ mixin _AirHttpMixin {
       csResponse = await interceptor.interceptResponse(csResponse);
     }
 
-    csResponse.success = false;
-
     var isThrow = csResponse.request?.isThrowException ?? false;
     if (isThrow && !csResponse.success) {
       var e = AirHttpException(message: csResponse.message);
