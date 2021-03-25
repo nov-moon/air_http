@@ -29,7 +29,7 @@ class AirRequest {
   bool? isGzip;
 
   /// 当前请求是否使用的UI交互类型，0不使用。一般用于loading弹出、错误时toast等。
-  int uxType = 0;
+  int? uxType;
 
   /// 当前request的持有对象，可能为空
   dynamic? requestHolder;
