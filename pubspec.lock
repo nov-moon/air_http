@@ -5,8 +5,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: HEAD
-      resolved-ref: "5ac8922eb90853e9245631f3d033533112c2ff6f"
+      ref: "55e6727114376496bd31227f7d5c7a95e4dee36a"
+      resolved-ref: "55e6727114376496bd31227f7d5c7a95e4dee36a"
       url: "https://github.com/NovMoon/AirExtensions.git"
     source: git
     version: "0.0.1"

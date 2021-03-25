@@ -277,7 +277,7 @@ mixin _AirHttpMixin {
         e.rawException = csResponse.exception;
         e.rawStack = csResponse.exceptionStack;
       }
-
+      print('request error -> $e');
       throw e;
     }
 
@@ -341,9 +341,6 @@ extension AirHttpExtension on String {
 mixin HttpMixin {
   AirRequest http(String url, [Map<String, dynamic>? params]) {
     final http = AirRequest.fromUrl(url, params);
-    http.requestHolder = this;
-    http.uxType = 1;
-    onCreateRequest(http);
     return http;
   }
 
@@ -361,6 +358,7 @@ mixin HttpMixin {
     request.uxType = uxType;
     request.isThrowException = isThrowException;
     request.requestHolder = this;
+    onCreateRequest(request);
     var result = await AirHttp._withRequest(request).post();
     onResponseComplete(result);
     return result;
@@ -374,6 +372,7 @@ mixin HttpMixin {
     request.uxType = uxType;
     request.isThrowException = isThrowException;
     request.requestHolder = this;
+    onCreateRequest(request);
     var result = await AirHttp._withRequest(request).get();
     onResponseComplete(result);
     return result;
@@ -387,6 +386,7 @@ mixin HttpMixin {
     request.uxType = uxType;
     request.isThrowException = isThrowException;
     request.requestHolder = this;
+    onCreateRequest(request);
     var result = await AirHttp._withRequest(request).put();
     onResponseComplete(result);
     return result;
@@ -400,6 +400,7 @@ mixin HttpMixin {
     request.uxType = uxType;
     request.isThrowException = isThrowException;
     request.requestHolder = this;
+    onCreateRequest(request);
     var result = await AirHttp._withRequest(request).head();
     onResponseComplete(result);
     return result;
@@ -413,6 +414,7 @@ mixin HttpMixin {
     request.uxType = uxType;
     request.isThrowException = isThrowException;
     request.requestHolder = this;
+    onCreateRequest(request);
     var result = await AirHttp._withRequest(request).delete();
     onResponseComplete(result);
     return result;
@@ -426,6 +428,7 @@ mixin HttpMixin {
     request.uxType = uxType;
     request.isThrowException = isThrowException;
     request.requestHolder = this;
+    onCreateRequest(request);
     var result = await AirHttp._withRequest(request).patch();
     onResponseComplete(result);
     return result;

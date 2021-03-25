@@ -12,4 +12,9 @@ class AirHttpException implements Exception {
     this.code = '9999',
     this.message = 'unknown',
   });
+
+  @override
+  String toString() {
+    return 'AirHttpException{message: $message, code: $code, request: $request, response: $response, rawException: $rawException, rawStack: $rawStack}';
+  }
 }

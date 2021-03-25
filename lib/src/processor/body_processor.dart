@@ -18,7 +18,7 @@ class BodyProcessor implements HttpProcessor {
       return node.process(request);
     }
 
-    if (raw.getHeaders().isContentJson) {
+    if (request.headers.isContentJson) {
       request.body = jsonEncode(raw.getParams());
     } else {
       request.body = raw.getParams().toStringMap;

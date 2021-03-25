@@ -15,7 +15,7 @@ class EmitterProcessor implements HttpProcessor {
     final client = request.httpClient = new Client();
     AirRawResponse response;
     Response rawResponse;
-
+    print('air_http: send request');
     try {
       switch (request.method) {
         case Method.GET:
