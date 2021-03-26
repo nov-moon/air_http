@@ -15,8 +15,8 @@ dependencies:
   http: ^0.13.0
   air_extensions:
     git:
-      url: https://github.com/NovMoon/AirExtensions.git
-      ref: 55e6727114376496bd31227f7d5c7a95e4dee36a
+      url: https://github.com/nov-moon/air_extensions.git
+      ref: 06cf5d5500567633887e9d4e441b1ecf3c5982ea
 #    path: ../air_extensions
 
 dev_dependencies:
