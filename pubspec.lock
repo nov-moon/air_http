@@ -4,11 +4,9 @@ packages:
   air_extensions:
     dependency: "direct main"
     description:
-      path: "."
-      ref: "06cf5d5500567633887e9d4e441b1ecf3c5982ea"
-      resolved-ref: "06cf5d5500567633887e9d4e441b1ecf3c5982ea"
-      url: "https://github.com/nov-moon/air_extensions.git"
-    source: git
+      path: "../air_extensions"
+      relative: true
+    source: path
     version: "0.0.1"
   async:
     dependency: transitive
