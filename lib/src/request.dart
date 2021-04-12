@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:air_extensions/air_api.dart';
@@ -42,6 +43,10 @@ class AirRequest {
 
   /// 当前请求编码，一般不用设置
   Encoding? encoding;
+
+  /// 当前请求的上传实体，支持File、List<int>两种格式，如果有此字段，则忽略params字段
+  /// 此字段要求请求method为put或post，否则无效
+  dynamic? uploadBody;
 
   /// 当前请求的method
   late Method method;
@@ -201,6 +206,16 @@ class AirRequest {
   }
 }
 
+class AirMultiFilePart {
+  String? contentType;
+  String? filename;
+  String? fieldName;
+  dynamic value;
+
+  AirMultiFilePart(this.value,
+      {this.fieldName, this.filename, this.contentType});
+}
+
 class AirRealRequest {
   AirRequest raw;
   Map<String, String> headers;
@@ -209,6 +224,7 @@ class AirRealRequest {
   String url;
   Method method;
   Client? httpClient;
+  BaseRequest? httpRequest;
 
   AirRealRequest(this.raw)
       : headers = raw.getHeaders().toStringMap,
@@ -216,6 +232,19 @@ class AirRealRequest {
         url = raw.url,
         method = raw.method {
     raw.closer = close;
+  }
+
+  bool isFileRequest() {
+    return raw.uploadBody != null;
+  }
+
+  bool isMultiFileRequest() {
+    for (var v in raw._params.values) {
+      if (v is File || v is List<int> || v is AirMultiFilePart) {
+        return true;
+      }
+    }
+    return false;
   }
 
   void close() {

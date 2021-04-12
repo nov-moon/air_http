@@ -172,6 +172,12 @@ mixin _AirHttpMixin {
     return _method(request);
   }
 
+  /// Send a request by the [method].
+  Future<AirResponse> send(Method method) async {
+    final request = await _buildRequest(method);
+    return _method(request);
+  }
+
   Future<AirRequest> _buildRequest(Method method) async {
     _request.method = method;
     AirRequest request = _request;
@@ -360,6 +366,22 @@ mixin HttpMixin {
     request.requestHolder = this;
     onCreateRequest(request);
     var result = await AirHttp._withRequest(request).post();
+    onResponseComplete(result);
+    return result;
+  }
+
+  /// 上传[uploadBody]对象，他可以是[File]、[List<int>]两种类型之一
+  Future<AirResponse> httpUpload(String url, dynamic uploadBody,
+      {int? uxType = 1,
+      bool? isThrowException,
+      Method method = Method.POST}) async {
+    AirRequest request = http(url, null);
+    request.uploadBody = uploadBody;
+    request.uxType = uxType;
+    request.isThrowException = isThrowException;
+    request.requestHolder = this;
+    onCreateRequest(request);
+    var result = await AirHttp._withRequest(request).send(method);
     onResponseComplete(result);
     return result;
   }

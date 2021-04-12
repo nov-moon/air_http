@@ -17,25 +17,32 @@ class EmitterProcessor implements HttpProcessor {
     Response rawResponse;
     print('air_http: send request');
     try {
-      switch (request.method) {
-        case Method.GET:
-          rawResponse = await gets(client.get, request);
-          break;
-        case Method.HEAD:
-          rawResponse = await gets(client.head, request);
-          break;
-        case Method.DELETE:
-          rawResponse = await gets(client.delete, request);
-          break;
-        case Method.POST:
-          rawResponse = await posts(client.post, request);
-          break;
-        case Method.PUT:
-          rawResponse = await posts(client.put, request);
-          break;
-        case Method.PATCH:
-          rawResponse = await posts(client.patch, request);
-          break;
+      if (request.httpRequest != null) {
+        var req = request.httpRequest!;
+        req.headers.addAll(request.headers);
+        var result = await client.send(req);
+        rawResponse = await Response.fromStream(result);
+      } else {
+        switch (request.method) {
+          case Method.GET:
+            rawResponse = await gets(client.get, request);
+            break;
+          case Method.HEAD:
+            rawResponse = await gets(client.head, request);
+            break;
+          case Method.DELETE:
+            rawResponse = await gets(client.delete, request);
+            break;
+          case Method.POST:
+            rawResponse = await posts(client.post, request);
+            break;
+          case Method.PUT:
+            rawResponse = await posts(client.put, request);
+            break;
+          case Method.PATCH:
+            rawResponse = await posts(client.patch, request);
+            break;
+        }
       }
     } finally {
       request.close();
