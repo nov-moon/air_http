@@ -206,6 +206,14 @@ class AirRequest {
   }
 }
 
+class DownloadRequest extends AirRequest {
+  File? targetFile;
+
+  DownloadRequest.fromUrl(String url,
+      {Map<String, dynamic>? params, this.targetFile})
+      : super.fromUrl(url, params);
+}
+
 class AirMultiFilePart {
   String? contentType;
   String? filename;

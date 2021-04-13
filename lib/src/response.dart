@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:http/http.dart';
 
@@ -41,16 +42,19 @@ abstract class AirResponse {
   int httpCode = 0;
   AirRequest? request;
   bool success = false;
-  String statusCode = '';
   String message = '';
+
+  dynamic? dataRaw;
+
+  bool get failed => !success;
+}
+
+abstract class AirApiResponse extends AirResponse {
+  String statusCode = '';
 
   Map<String, dynamic> get dataMap;
 
   List<dynamic> get dataList;
-
-  bool get failed => !success;
-
-  dynamic get dataRaw;
 
   dynamic operator [](Object key) {
     if (dataRaw is Map) {
@@ -79,12 +83,7 @@ abstract class AirResponse {
   }
 }
 
-class AirRealResponse extends AirResponse {
-  dynamic exception;
-  dynamic exceptionStack;
-
-  dynamic dataRaw = '';
-
+class AirRealResponse extends AirApiResponse with ExceptionResponseMixin {
   Map<String, dynamic> get dataMap => dataRaw as Map<String, dynamic>;
 
   List<dynamic> get dataList => dataRaw as List<dynamic>;
@@ -124,11 +123,53 @@ class AirRealResponse extends AirResponse {
   }
 }
 
+class DownloadResponse extends AirResponse with ExceptionResponseMixin {
+  File get resultFile => dataRaw as File;
+
+  List<int> get resultBytes => dataRaw as List<int>;
+
+  @override
+  String toString() {
+    return """DownloadResponse{
+    url: ${request?.url}
+    success: $success, httpCode: $httpCode
+    header: $headers
+    data: $dataRaw
+    }""";
+  }
+
+  String toFormatString(String data) {
+    var result = """DownloadResponse{
+  url: ${request?.host}${request?.url}
+  success: $success, httpCode: $httpCode
+  header: $headers
+""";
+    result += '  data:';
+    for (var value in data.split("\n")) {
+      result += "  " + value + "\n";
+    }
+    if (exception != null) {
+      result += '  exception: ${exception.toString()}\n';
+    }
+    if (exceptionStack != null) {
+      result += '  exceptionStack:\n';
+      var list = exceptionStack.toString().split("\n");
+      for (var value in list) {
+        result += "    " + value + "\n";
+      }
+    }
+    result += "}";
+    return result;
+  }
+}
+
 class AirRawResponse {
   late Map<String, String> headers;
   late int httpCode;
   late List<int> bodyBytes;
-  late Response rawResponse;
+  late File resultFile;
+  Response? rawResponse;
+  late StreamedResponse rawStreamedResponse;
 
   String get body => utf8.decode(bodyBytes);
 
@@ -138,4 +179,14 @@ class AirRawResponse {
     bodyBytes = resp.bodyBytes;
     rawResponse = resp;
   }
+
+  AirRawResponse.fromResponseStream(StreamedResponse resp) {
+    rawStreamedResponse = resp;
+  }
+}
+
+mixin ExceptionResponseMixin {
+  dynamic exception;
+  dynamic exceptionStack;
+  void setException(e) {}
 }

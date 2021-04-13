@@ -1,8 +1,8 @@
 import 'dart:convert';
 
 import 'package:air_extensions/air_api.dart';
+import 'package:air_http/air_http.dart';
 import 'package:air_http/src/http.dart';
-import 'package:air_http/src/methods.dart';
 import 'package:air_http/src/request.dart';
 import 'package:air_http/src/response.dart';
 import 'package:http/http.dart';
@@ -13,47 +13,38 @@ class EmitterProcessor implements HttpProcessor {
   Future<AirRawResponse> process(ProcessorNode node) async {
     var request = node.request;
     final client = request.httpClient = new Client();
-    AirRawResponse response;
-    Response rawResponse;
     print('air_http: send request');
+    StreamedResponse responseRaw;
     try {
       if (request.httpRequest != null) {
         var req = request.httpRequest!;
         req.headers.addAll(request.headers);
-        var result = await client.send(req);
-        rawResponse = await Response.fromStream(result);
+        responseRaw = await client.send(req);
       } else {
-        switch (request.method) {
-          case Method.GET:
-            rawResponse = await gets(client.get, request);
-            break;
-          case Method.HEAD:
-            rawResponse = await gets(client.head, request);
-            break;
-          case Method.DELETE:
-            rawResponse = await gets(client.delete, request);
-            break;
-          case Method.POST:
-            rawResponse = await posts(client.post, request);
-            break;
-          case Method.PUT:
-            rawResponse = await posts(client.put, request);
-            break;
-          case Method.PATCH:
-            rawResponse = await posts(client.patch, request);
-            break;
+        var req = Request(request.method.name, request.url.asUri);
+
+        req.headers.addAll(request.headers);
+        if (request.encoding != null) request.encoding = request.encoding;
+        var body = request.body;
+        if (body != null) {
+          if (body is String) {
+            req.body = body;
+          } else if (body is List) {
+            req.bodyBytes = body.cast<int>();
+          } else if (body is Map) {
+            req.bodyFields = body.cast<String, String>();
+          } else {
+            throw AirHttpException(message: 'Invalid request body "$body".');
+          }
         }
+
+        responseRaw = await client.send(req);
       }
     } finally {
       request.close();
     }
 
-    // if (AirHttp.isCloseClientEveryTime) {
-    //   client.close();
-    // }
-
-    response = AirRawResponse.fromResponse(rawResponse);
-    return response;
+    return AirRawResponse.fromResponseStream(responseRaw);
   }
 
   /// 以Get类型的方式发送请求

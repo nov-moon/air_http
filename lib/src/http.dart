@@ -1,17 +1,19 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:air_extensions/air_api.dart';
 import 'package:air_http/air_http.dart';
-import 'package:air_http/src/processor/body_processor.dart';
 import 'package:air_http/src/processor/cache_processor.dart';
 import 'package:air_http/src/processor/gzip_processor.dart';
 import 'package:air_http/src/processor/pre_processor.dart';
-import 'package:air_http/src/processor/query_processor.dart';
 import 'package:flutter/foundation.dart';
 
 import 'inspector.dart';
 import 'methods.dart';
 import 'processor/emitter_processor.dart';
+import 'processor/request_body_processor.dart';
+import 'processor/request_query_processor.dart';
+import 'processor/resp_body_processor.dart';
 import 'request.dart';
 import 'response.dart';
 
@@ -134,42 +136,42 @@ mixin _AirHttpMixin {
   late AirRequest _request;
 
   /// Send a request by the 'POST' method.
-  Future<AirResponse> post() async {
+  Future<AirApiResponse> post() async {
     final request = await _buildRequest(Method.POST);
 
-    return _method(request);
+    return _method(request) as AirApiResponse;
   }
 
   /// Send a request by the 'GET' method.
-  Future<AirResponse> get() async {
+  Future<AirApiResponse> get() async {
     final request = await _buildRequest(Method.GET);
 
-    return _method(request);
+    return _method(request) as AirApiResponse;
   }
 
   /// Send a request by the 'HEAD' method.
-  Future<AirResponse> head() async {
+  Future<AirApiResponse> head() async {
     final request = await _buildRequest(Method.HEAD);
 
-    return _method(request);
+    return _method(request) as AirApiResponse;
   }
 
   /// Send a request by the 'PUT' method.
-  Future<AirResponse> put() async {
+  Future<AirApiResponse> put() async {
     final request = await _buildRequest(Method.PUT);
-    return _method(request);
+    return _method(request) as AirApiResponse;
   }
 
   /// Send a request by the 'PATCH' method.
-  Future<AirResponse> patch() async {
+  Future<AirApiResponse> patch() async {
     final request = await _buildRequest(Method.PATCH);
-    return _method(request);
+    return _method(request) as AirApiResponse;
   }
 
   /// Send a request by the 'DELETE' method.
-  Future<AirResponse> delete() async {
+  Future<AirApiResponse> delete() async {
     final request = await _buildRequest(Method.DELETE);
-    return _method(request);
+    return _method(request) as AirApiResponse;
   }
 
   /// Send a request by the [method].
@@ -208,9 +210,10 @@ mixin _AirHttpMixin {
     processors.addAll(AirHttp.processors);
     processors.add(PreProcessor());
     processors.add(CacheProcessor());
-    processors.add(QueryProcessor());
-    processors.add(BodyProcessor());
+    processors.add(RequestQueryProcessor());
+    processors.add(RequestBodyProcessor());
     processors.add(GzipProcessor());
+    processors.add(RespBodyProcessor());
     processors.add(EmitterProcessor());
 
     if (request.parser == null) {
@@ -220,8 +223,11 @@ mixin _AirHttpMixin {
     ProcessorNode node =
         _ProcessorNodeImpl(processors, 0, AirRealRequest(request));
 
-    AirResponse csResponse =
+    AirResponse resultResp =
         await node.process(node.request).then((response) async {
+      if (request is DownloadRequest) {
+        return _defaultDownloadParser(response, request);
+      }
       // 正常请求的处理
       final result = await _defaultResponseParser(response, request);
       result.request = request;
@@ -229,68 +235,44 @@ mixin _AirHttpMixin {
       result.headers = response.headers;
       return result;
     }).catchError((exception, stack) async {
+      // 发生AirHttpException类型错误时的处理
       if (exception is AirHttpException) {
-        var resp = exception.response;
-        if (resp == null) {
-          resp = AirRealResponse();
-          resp.request = request;
-          resp.httpCode = -1;
-          if (resp is AirRealResponse) {
-            resp.exception = exception;
-            resp.exceptionStack = stack;
-          }
-        }
-        return resp;
+        return _processError(exception, stack, request);
       }
-      // 发生错误时的处理
-      AirResponse result = AirRealResponse();
-      result.request = request;
-      result.httpCode = -1;
-      if (AirHttp.onExceptionOccurred != null) {
-        dynamic processResult = AirHttp.onExceptionOccurred?.call(exception);
-        if (processResult is Future) {
-          processResult = await processResult;
-        }
-        if (processResult != null && processResult is AirResponse) {
-          result = processResult;
-        } else {
-          result.message = processResult?.toString() ?? "";
-        }
-      } else {
-        result.message = exception.toString();
-      }
-      if (result is AirRealResponse) {
-        if (result.exception == null) result.exception = exception;
-        if (result.exceptionStack == null) result.exceptionStack = stack;
-      }
-      return result;
+      // 发生其他类型错误时的处理
+
+      return _processOtherError(exception, stack, request);
     });
 
     for (var value in AirHttp._interceptors) {
-      csResponse = await value.interceptResponse(csResponse);
+      resultResp = await value.interceptResponse(resultResp);
     }
 
     for (var interceptor in request.getInterceptors()) {
-      csResponse = await interceptor.interceptResponse(csResponse);
+      resultResp = await interceptor.interceptResponse(resultResp);
     }
 
-    var isThrow = csResponse.request?.isThrowException ?? false;
-    if (isThrow && !csResponse.success) {
-      var e = AirHttpException(message: csResponse.message);
-      e.request = csResponse.request ?? request;
-      e.response = csResponse;
-      if (csResponse is AirRealResponse) {
-        e.rawException = csResponse.exception;
-        e.rawStack = csResponse.exceptionStack;
+    var isThrow = resultResp.request?.isThrowException ?? false;
+    if (isThrow && !resultResp.success) {
+      var msg = 'unknown';
+      if (resultResp is AirApiResponse) {
+        msg = resultResp.message;
+      }
+      var e = AirHttpException(message: msg);
+      e.request = resultResp.request ?? request;
+      e.response = resultResp;
+      if (resultResp is AirRealResponse) {
+        e.rawException = resultResp.exception;
+        e.rawStack = resultResp.exceptionStack;
       }
       print('request error -> $e');
       throw e;
     }
 
-    return csResponse;
+    return resultResp;
   }
 
-  Future<AirResponse> _defaultResponseParser(
+  Future<AirApiResponse> _defaultResponseParser(
       AirRawResponse response, AirRequest request) async {
     final map = jsonDecode(response.body);
     final result = AirRealResponse();
@@ -305,6 +287,81 @@ mixin _AirHttpMixin {
     result.dataRaw = parser.parseData(map, requestType);
     return result;
   }
+
+  AirResponse _defaultDownloadParser(
+      AirRawResponse response, DownloadRequest request) {
+    var resp = DownloadResponse();
+    resp.httpCode = response.httpCode;
+    resp.request = request;
+    resp.headers = response.headers;
+    resp.success = response.httpCode >= 200 && response.httpCode < 300;
+    if (request.targetFile != null) {
+      resp.dataRaw = response.resultFile;
+    } else {
+      resp.dataRaw = response.bodyBytes;
+    }
+    return resp;
+  }
+
+  AirResponse _processError(
+      AirHttpException exception, dynamic stack, AirRequest request) {
+    var resp = exception.response;
+    if (resp == null) {
+      if (request is DownloadRequest) {
+        resp = DownloadResponse();
+      } else {
+        resp = AirRealResponse();
+      }
+      resp.request = request;
+      resp.httpCode = -1;
+    }
+    if (resp is AirRealResponse) {
+      resp.exception = exception;
+      resp.exceptionStack = stack;
+    } else if (resp is DownloadResponse) {
+      resp.exception = exception;
+      resp.exceptionStack = stack;
+    }
+    return resp;
+  }
+
+  Future<AirResponse> _processOtherError(
+      AirHttpException exception, dynamic stack, AirRequest request) async {
+    late AirResponse result;
+    if (request is DownloadRequest) {
+      result = DownloadResponse();
+    } else {
+      result = AirRealResponse();
+    }
+    result.request = request;
+    result.httpCode = -1;
+    if (AirHttp.onExceptionOccurred != null) {
+      dynamic processResult = AirHttp.onExceptionOccurred?.call(exception);
+      if (processResult is Future) {
+        processResult = await processResult;
+      }
+      if (processResult != null && processResult is AirApiResponse) {
+        result = processResult;
+      } else {
+        result.message = processResult?.toString() ?? "";
+      }
+    } else {
+      result.message = exception.toString();
+    }
+    if (result is AirRealResponse) {
+      if (result.exception == null) result.exception = exception;
+      if (result.exceptionStack == null) result.exceptionStack = stack;
+    }
+    if (result is AirRealResponse) {
+      if (result.exception == null) result.exception = exception;
+      if (result.exceptionStack == null) result.exceptionStack = stack;
+    } else if (result is DownloadResponse) {
+      if (result.exception == null) result.exception = exception;
+      if (result.exceptionStack == null) result.exceptionStack = stack;
+    }
+
+    return result;
+  }
 }
 
 extension AirHttpExtension on String {
@@ -313,32 +370,32 @@ extension AirHttpExtension on String {
     return http;
   }
 
-  Future<AirResponse> httpPost([Map<String, dynamic>? params]) {
+  Future<AirApiResponse> httpPost([Map<String, dynamic>? params]) {
     AirRequest request = http(params);
     return AirHttp._withRequest(request).post();
   }
 
-  Future<AirResponse> httpGet([Map<String, dynamic>? params]) {
+  Future<AirApiResponse> httpGet([Map<String, dynamic>? params]) {
     AirRequest request = http(params);
     return AirHttp._withRequest(request).get();
   }
 
-  Future<AirResponse> httpPut([Map<String, dynamic>? params]) {
+  Future<AirApiResponse> httpPut([Map<String, dynamic>? params]) {
     AirRequest request = http(params);
     return AirHttp._withRequest(request).put();
   }
 
-  Future<AirResponse> httpHead([Map<String, dynamic>? params]) {
+  Future<AirApiResponse> httpHead([Map<String, dynamic>? params]) {
     AirRequest request = http(params);
     return AirHttp._withRequest(request).head();
   }
 
-  Future<AirResponse> httpDelete([Map<String, dynamic>? params]) {
+  Future<AirApiResponse> httpDelete([Map<String, dynamic>? params]) {
     AirRequest request = http(params);
     return AirHttp._withRequest(request).delete();
   }
 
-  Future<AirResponse> httpPatch([Map<String, dynamic>? params]) {
+  Future<AirApiResponse> httpPatch([Map<String, dynamic>? params]) {
     AirRequest request = http(params);
     return AirHttp._withRequest(request).patch();
   }
@@ -356,7 +413,7 @@ mixin HttpMixin {
   @protected
   void onResponseComplete(AirResponse response) {}
 
-  Future<AirResponse> httpPost(String url,
+  Future<AirApiResponse> httpPost(String url,
       [Map<String, dynamic>? params,
       int? uxType = 1,
       bool? isThrowException]) async {
@@ -371,7 +428,7 @@ mixin HttpMixin {
   }
 
   /// 上传[uploadBody]对象，他可以是[File]、[List<int>]两种类型之一
-  Future<AirResponse> httpUpload(String url, dynamic uploadBody,
+  Future<AirApiResponse> httpUpload(String url, dynamic uploadBody,
       {int? uxType = 1,
       bool? isThrowException,
       Method method = Method.POST}) async {
@@ -381,12 +438,32 @@ mixin HttpMixin {
     request.isThrowException = isThrowException;
     request.requestHolder = this;
     onCreateRequest(request);
-    var result = await AirHttp._withRequest(request).send(method);
+    var result =
+        await AirHttp._withRequest(request).send(method) as AirApiResponse;
     onResponseComplete(result);
     return result;
   }
 
-  Future<AirResponse> httpGet(String url,
+  /// 下载
+  Future<DownloadResponse> httpDownload(String url,
+      {Map<String, dynamic>? params,
+      File? resultFile,
+      int? uxType = 1,
+      bool? isThrowException,
+      Method method = Method.GET}) async {
+    var request =
+        DownloadRequest.fromUrl(url, params: params, targetFile: resultFile);
+    request.uxType = uxType;
+    request.isThrowException = isThrowException;
+    request.requestHolder = this;
+    onCreateRequest(request);
+    var result =
+        await AirHttp._withRequest(request).send(method) as DownloadResponse;
+    onResponseComplete(result);
+    return result;
+  }
+
+  Future<AirApiResponse> httpGet(String url,
       [Map<String, dynamic>? params,
       int? uxType = 1,
       bool? isThrowException]) async {
@@ -400,7 +477,7 @@ mixin HttpMixin {
     return result;
   }
 
-  Future<AirResponse> httpPut(String url,
+  Future<AirApiResponse> httpPut(String url,
       [Map<String, dynamic>? params,
       int? uxType = 1,
       bool? isThrowException]) async {
@@ -414,7 +491,7 @@ mixin HttpMixin {
     return result;
   }
 
-  Future<AirResponse> httpHead(String url,
+  Future<AirApiResponse> httpHead(String url,
       [Map<String, dynamic>? params,
       int? uxType = 1,
       bool? isThrowException]) async {
@@ -428,7 +505,7 @@ mixin HttpMixin {
     return result;
   }
 
-  Future<AirResponse> httpDelete(String url,
+  Future<AirApiResponse> httpDelete(String url,
       [Map<String, dynamic>? params,
       int? uxType = 1,
       bool? isThrowException]) async {
@@ -442,7 +519,7 @@ mixin HttpMixin {
     return result;
   }
 
-  Future<AirResponse> httpPatch(String url,
+  Future<AirApiResponse> httpPatch(String url,
       [Map<String, dynamic>? params,
       int? uxType = 1,
       bool? isThrowException]) async {
@@ -458,27 +535,27 @@ mixin HttpMixin {
 }
 
 extension AirRequestExtension on AirRequest {
-  Future<AirResponse> post() async {
+  Future<AirApiResponse> post() async {
     return AirHttp._withRequest(this).post();
   }
 
-  Future<AirResponse> get() async {
+  Future<AirApiResponse> get() async {
     return AirHttp._withRequest(this).get();
   }
 
-  Future<AirResponse> head() async {
+  Future<AirApiResponse> head() async {
     return AirHttp._withRequest(this).head();
   }
 
-  Future<AirResponse> put() async {
+  Future<AirApiResponse> put() async {
     return AirHttp._withRequest(this).put();
   }
 
-  Future<AirResponse> patch() async {
+  Future<AirApiResponse> patch() async {
     return AirHttp._withRequest(this).patch();
   }
 
-  Future<AirResponse> delete() async {
+  Future<AirApiResponse> delete() async {
     return AirHttp._withRequest(this).delete();
   }
 }

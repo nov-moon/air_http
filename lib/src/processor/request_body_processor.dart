@@ -10,7 +10,7 @@ import 'package:http/http.dart';
 import '../../air_http.dart';
 
 /// 处理Post类型的Body
-class BodyProcessor implements HttpProcessor {
+class RequestBodyProcessor implements HttpProcessor {
   @override
   Future<AirRawResponse> process(ProcessorNode node) async {
     var request = node.request;
@@ -23,7 +23,7 @@ class BodyProcessor implements HttpProcessor {
     }
 
     if (request.isFileRequest()) {
-      var req = Request(request.method.toString(), raw.url.asUri);
+      var req = Request(request.method.name, raw.url.asUri);
       var uploadBody = raw.uploadBody;
       if (uploadBody is File) {
         req.bodyBytes = await uploadBody.readAsBytes();
@@ -44,7 +44,7 @@ class BodyProcessor implements HttpProcessor {
       }
       request.httpRequest = req;
     } else if (request.isMultiFileRequest()) {
-      var req = MultipartRequest(request.method.toString(), raw.url.asUri);
+      var req = MultipartRequest(request.method.name, raw.url.asUri);
 
       var params = raw.getParams();
 
