@@ -139,39 +139,39 @@ mixin _AirHttpMixin {
   Future<AirApiResponse> post() async {
     final request = await _buildRequest(Method.POST);
 
-    return _method(request) as AirApiResponse;
+    return await _method(request) as AirApiResponse;
   }
 
   /// Send a request by the 'GET' method.
   Future<AirApiResponse> get() async {
     final request = await _buildRequest(Method.GET);
 
-    return _method(request) as AirApiResponse;
+    return await _method(request) as AirApiResponse;
   }
 
   /// Send a request by the 'HEAD' method.
   Future<AirApiResponse> head() async {
     final request = await _buildRequest(Method.HEAD);
 
-    return _method(request) as AirApiResponse;
+    return await _method(request) as AirApiResponse;
   }
 
   /// Send a request by the 'PUT' method.
   Future<AirApiResponse> put() async {
     final request = await _buildRequest(Method.PUT);
-    return _method(request) as AirApiResponse;
+    return await _method(request) as AirApiResponse;
   }
 
   /// Send a request by the 'PATCH' method.
   Future<AirApiResponse> patch() async {
     final request = await _buildRequest(Method.PATCH);
-    return _method(request) as AirApiResponse;
+    return await _method(request) as AirApiResponse;
   }
 
   /// Send a request by the 'DELETE' method.
   Future<AirApiResponse> delete() async {
     final request = await _buildRequest(Method.DELETE);
-    return _method(request) as AirApiResponse;
+    return await _method(request) as AirApiResponse;
   }
 
   /// Send a request by the [method].
@@ -326,7 +326,7 @@ mixin _AirHttpMixin {
   }
 
   Future<AirResponse> _processOtherError(
-      AirHttpException exception, dynamic stack, AirRequest request) async {
+      Exception exception, dynamic stack, AirRequest request) async {
     late AirResponse result;
     if (request is DownloadRequest) {
       result = DownloadResponse();
