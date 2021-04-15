@@ -220,8 +220,9 @@ mixin _AirHttpMixin {
       request.parser = AirHttp.responseParser(request.requestType ?? 0);
     }
 
-    ProcessorNode node =
-        _ProcessorNodeImpl(processors, 0, AirRealRequest(request));
+    var rawReq = AirRealRequest(request);
+
+    ProcessorNode node = _ProcessorNodeImpl(processors, 0, rawReq);
 
     AirResponse resultResp =
         await node.process(node.request).then((response) async {
@@ -243,6 +244,8 @@ mixin _AirHttpMixin {
 
       return _processOtherError(exception, stack, request);
     });
+
+    rawReq.close();
 
     for (var value in AirHttp._interceptors) {
       resultResp = await value.interceptResponse(resultResp);
