@@ -281,10 +281,18 @@ mixin _AirHttpMixin {
     }
     var requestType = request.requestType ?? 0;
     var parser = request.parser!;
-    result.success = parser.isSuccess(map, requestType);
-    result.statusCode = parser.parseStatusCode(map, requestType);
-    result.message = parser.parseMessage(map, requestType);
-    result.dataRaw = parser.parseData(map, requestType);
+    var httpCode = response.httpCode;
+    var header = response.headers;
+    result.success =
+        parser.isSuccess(httpCode, header, request, map, requestType);
+    result.statusCode =
+        parser.parseStatusCode(httpCode, header, request, map, requestType);
+    result.message =
+        parser.parseMessage(httpCode, header, request, map, requestType);
+    result.dataRaw =
+        parser.parseData(httpCode, header, request, map, requestType);
+    result.isLoginExpired =
+        parser.parseLoginExpired(httpCode, header, request, map, requestType);
     return result;
   }
 

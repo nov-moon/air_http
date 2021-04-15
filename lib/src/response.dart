@@ -6,34 +6,51 @@ import 'package:http/http.dart';
 import 'request.dart';
 
 abstract class AirResponseParser {
-  bool isSuccess(Map<String, dynamic> result, int requestType);
+  bool isSuccess(int httpCode, Map<String, String> headers, AirRequest request,
+      Map<String, dynamic> respBody, int requestType);
 
-  String parseStatusCode(Map<String, dynamic> result, int requestType);
+  String parseStatusCode(int httpCode, Map<String, String> headers,
+      AirRequest request, Map<String, dynamic> respBody, int requestType);
 
-  String parseMessage(Map<String, dynamic> result, int requestType);
+  String parseMessage(int httpCode, Map<String, String> headers,
+      AirRequest request, Map<String, dynamic> respBody, int requestType);
 
-  dynamic parseData(Map<String, dynamic> result, int requestType);
+  dynamic parseData(int httpCode, Map<String, String> headers,
+      AirRequest request, Map<String, dynamic> respBody, int requestType);
+
+  bool parseLoginExpired(int httpCode, Map<String, String> headers,
+      AirRequest request, Map<String, dynamic> respBody, int requestType);
 }
 
 class AirDefaultParser implements AirResponseParser {
   @override
-  parseData(Map<String, dynamic> result, int requestType) {
+  parseData(int httpCode, Map<String, String> headers, AirRequest request,
+      Map<String, dynamic> result, int requestType) {
     return result['data'] ?? {};
   }
 
   @override
-  String parseMessage(Map<String, dynamic> result, int requestType) {
+  String parseMessage(int httpCode, Map<String, String> headers,
+      AirRequest request, Map<String, dynamic> result, int requestType) {
     return result['message'] ?? 'No message.';
   }
 
   @override
-  String parseStatusCode(Map<String, dynamic> result, int requestType) {
+  String parseStatusCode(int httpCode, Map<String, String> headers,
+      AirRequest request, Map<String, dynamic> result, int requestType) {
     return result['code'] ?? '';
   }
 
   @override
-  bool isSuccess(Map<String, dynamic> result, int requestType) {
+  bool isSuccess(int httpCode, Map<String, String> headers, AirRequest request,
+      Map<String, dynamic> result, int requestType) {
     return result['success'] ?? false;
+  }
+
+  @override
+  bool parseLoginExpired(int httpCode, Map<String, String> headers,
+      AirRequest request, Map<String, dynamic> respBody, int requestType) {
+    return respBody['code'] == '9999' && respBody['data']['reload'];
   }
 }
 
@@ -43,6 +60,7 @@ abstract class AirResponse {
   AirRequest? request;
   bool success = false;
   String message = '';
+  bool isLoginExpired = false;
 
   dynamic? dataRaw;
 
@@ -188,5 +206,6 @@ class AirRawResponse {
 mixin ExceptionResponseMixin {
   dynamic exception;
   dynamic exceptionStack;
+
   void setException(e) {}
 }
