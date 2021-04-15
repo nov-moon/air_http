@@ -326,7 +326,7 @@ mixin _AirHttpMixin {
   }
 
   Future<AirResponse> _processOtherError(
-      Exception exception, dynamic stack, AirRequest request) async {
+      dynamic exception, dynamic stack, AirRequest request) async {
     late AirResponse result;
     if (request is DownloadRequest) {
       result = DownloadResponse();

@@ -31,9 +31,10 @@ class RespBodyProcessor implements HttpProcessor {
       }
 
       resp.resultFile = targetFile;
-      resp.headers = resp.headers;
-      resp.httpCode = resp.httpCode;
+      resp.headers = resp.rawStreamedResponse.headers;
+      resp.httpCode = resp.rawStreamedResponse.statusCode;
       resp.bodyBytes = [];
+      return resp;
     }
 
     return AirRawResponse.fromResponse(
