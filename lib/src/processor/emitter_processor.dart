@@ -41,7 +41,7 @@ class EmitterProcessor implements HttpProcessor {
         responseRaw = await client.send(req);
       }
     } finally {
-      request.close();
+      // request.close();
     }
 
     return AirRawResponse.fromResponseStream(responseRaw);
