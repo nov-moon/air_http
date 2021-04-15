@@ -41,6 +41,9 @@ class AirRequest {
   /// 是否抛出exception
   bool? isThrowException;
 
+  /// 是否使用Multipart
+  bool isMultipart = false;
+
   /// 当前请求编码，一般不用设置
   Encoding? encoding;
 
@@ -206,6 +209,11 @@ class AirRequest {
   }
 }
 
+/// 如来标注当前字段为普通字段，主要用于multipart类型的post请求中的List<int>类型，
+/// 在此类型中List<int>默认为字节流类型，可使用此注解将其注解为普通类型。
+/// 例如：{'@filed:eventType': [1, 2, 3]}，则此字段实际请求为：{'eventType': [1, 2, 3]}
+const String annotationFieldNormal = '@filed';
+
 class DownloadRequest extends AirRequest {
   File? targetFile;
 
@@ -246,14 +254,7 @@ class AirRealRequest {
     return raw.uploadBody != null;
   }
 
-  bool isMultiFileRequest() {
-    for (var v in raw._params.values) {
-      if (v is File || v is List<int> || v is AirMultiFilePart) {
-        return true;
-      }
-    }
-    return false;
-  }
+  bool isMultiFileRequest() => raw.isMultipart;
 
   void close() {
     httpClient?.close();

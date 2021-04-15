@@ -326,7 +326,7 @@ mixin _AirHttpMixin {
   }
 
   Future<AirResponse> _processOtherError(
-      Exception exception, dynamic stack, AirRequest request) async {
+      dynamic exception, dynamic stack, AirRequest request) async {
     late AirResponse result;
     if (request is DownloadRequest) {
       result = DownloadResponse();
@@ -440,6 +440,24 @@ mixin HttpMixin {
     onCreateRequest(request);
     var result =
         await AirHttp._withRequest(request).send(method) as AirApiResponse;
+    onResponseComplete(result);
+    return result;
+  }
+
+  /// 下载
+  Future<AirApiResponse> httpMultipart(
+    String url, {
+    Map<String, dynamic>? params,
+    int? uxType = 1,
+    bool? isThrowException,
+  }) async {
+    AirRequest request = http(url, params);
+    request.uxType = uxType;
+    request.isThrowException = isThrowException;
+    request.requestHolder = this;
+    request.isMultipart = true;
+    onCreateRequest(request);
+    var result = await AirHttp._withRequest(request).post();
     onResponseComplete(result);
     return result;
   }

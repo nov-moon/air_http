@@ -53,7 +53,8 @@ class RequestBodyProcessor implements HttpProcessor {
         MultipartFile? part;
         if (value is File) {
           part = await MultipartFile.fromPath(key, value.path);
-        } else if (value is List<int>) {
+        } else if (value is List<int> &&
+            !key.startsWith(annotationFieldNormal)) {
           part = MultipartFile.fromBytes(key, value);
         } else if (value is AirMultiFilePart) {
           if (value.value is File) {
@@ -62,7 +63,11 @@ class RequestBodyProcessor implements HttpProcessor {
             part = MultipartFile.fromBytes(key, value.value as List<int>);
           }
         } else {
-          req.fields['key'] = value;
+          String k = key;
+          if (key.startsWith(annotationFieldNormal)) {
+            k = key.substring(annotationFieldNormal.length);
+          }
+          req.fields[k] = value;
         }
         if (part != null) {
           req.files.add(part);
