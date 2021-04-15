@@ -39,7 +39,7 @@ class PreProcessor implements HttpProcessor {
     final baseHeader = AirHttp.headers?.call(raw.requestType ?? 0);
     baseHeader?.foreach((key, value) {
       if (!request.headers.containsKey(key)) {
-        request.headers[key] = value;
+        request.headers[key] = value.toString();
       }
     });
 
