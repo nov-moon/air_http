@@ -194,19 +194,25 @@ class AirRequest {
 
   @override
   String toString() {
-//    curl $param -X $method "$url" -H "accept: application/json" -H "Content-Type: application/json" $authorizationHeader
-
-    var printUrl = url;
-    if (host != null && !printUrl.isPathHttp) {
-      printUrl = host! + url;
-    }
-    return """AirRequest{
-    method: $method, url: $printUrl
-    requestType: $requestType, requestTimeout: $requestTimeout, isGzip: $isGzip, encoding: $encoding
-    headers: $_headers
-    params: $_params
-}""";
+    return 'AirRequest{url: $url, host: $host, requestType: $requestType, requestTimeout: $requestTimeout, isGzip: $isGzip, uxType: $uxType, requestHolder: $requestHolder, parser: $parser, isMultipart: $isMultipart, encoding: $encoding, method: $method, _headers: $_headers, _params: $_params, _pathParams: $_pathParams, _pathAppendParams: $_pathAppendParams, _interceptors: $_interceptors, _processors: $_processors}';
   }
+
+//   @override
+//   String toString() {
+// //    curl $param -X $method "$url" -H "accept: application/json" -H "Content-Type: application/json" $authorizationHeader
+//
+//     var printUrl = url;
+//     if (host != null && !printUrl.isPathHttp) {
+//       printUrl = host! + url;
+//     }
+//     return """AirRequest{
+//     method: $method, url: $printUrl
+//     requestType: $requestType, requestTimeout: $requestTimeout, isGzip: $isGzip, encoding: $encoding
+//     headers: $_headers
+//     params: $_params
+// }""";
+//   }
+
 }
 
 /// 如来标注当前字段为普通字段，主要用于multipart类型的post请求中的List<int>类型，
@@ -259,5 +265,10 @@ class AirRealRequest {
   void close() {
     httpClient?.close();
     httpClient = null;
+  }
+
+  @override
+  String toString() {
+    return 'AirRealRequest{raw: $raw, headers: $headers, encoding: $encoding, url: $url, method: $method}';
   }
 }

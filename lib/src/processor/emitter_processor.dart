@@ -13,7 +13,7 @@ class EmitterProcessor implements HttpProcessor {
   Future<AirRawResponse> process(ProcessorNode node) async {
     var request = node.request;
     final client = request.httpClient = new Client();
-    print('air_http: send request');
+    print('air_http: request -> $request');
     StreamedResponse responseRaw;
     try {
       if (request.httpRequest != null) {
