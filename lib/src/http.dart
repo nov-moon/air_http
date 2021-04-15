@@ -455,18 +455,17 @@ mixin HttpMixin {
     return result;
   }
 
-  /// 下载
-  Future<AirApiResponse> httpMultipart(
-    String url, {
-    Map<String, dynamic>? params,
-    int? uxType = 1,
-    bool? isThrowException,
-  }) async {
+  Future<AirApiResponse> httpMultipart(String url,
+      {Map<String, dynamic>? params,
+      required Map<String, dynamic> multipart,
+      int? uxType = 1,
+      bool? isThrowException}) async {
     AirRequest request = http(url, params);
     request.uxType = uxType;
     request.isThrowException = isThrowException;
     request.requestHolder = this;
     request.isMultipart = true;
+    request.addMultipartMap(multipart);
     onCreateRequest(request);
     var result = await AirHttp._withRequest(request).post();
     onResponseComplete(result);

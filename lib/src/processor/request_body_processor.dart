@@ -6,6 +6,7 @@ import 'package:air_http/src/http.dart';
 import 'package:air_http/src/methods.dart';
 import 'package:air_http/src/response.dart';
 import 'package:http/http.dart';
+import 'package:http_parser/http_parser.dart';
 
 import '../../air_http.dart';
 
@@ -49,29 +50,26 @@ class RequestBodyProcessor implements HttpProcessor {
       var params = raw.getParams();
 
       for (var key in params.keys) {
-        var value = params[key];
+        req.fields[key] = params[key];
+      }
+
+      for (var item in raw.getMultipartParams()) {
         MultipartFile? part;
+        var value = item.value;
+        var field = item.fieldName!;
+        MediaType? contentType;
+        if (item.contentType?.isNotEmpty ?? false) {
+          contentType = MediaType.parse(item.contentType!);
+        }
+        var filename = item.filename;
         if (value is File) {
-          part = await MultipartFile.fromPath(key, value.path);
-        } else if (value is List<int> &&
-            !key.startsWith(annotationFieldNormal)) {
-          part = MultipartFile.fromBytes(key, value);
-        } else if (value is AirMultiFilePart) {
-          if (value.value is File) {
-            part = await MultipartFile.fromPath(key, value.value.path);
-          } else {
-            part = MultipartFile.fromBytes(key, value.value as List<int>);
-          }
+          part = await MultipartFile.fromPath(field, value.path,
+              contentType: contentType, filename: filename);
         } else {
-          String k = key;
-          if (key.startsWith(annotationFieldNormal)) {
-            k = key.substring(annotationFieldNormal.length);
-          }
-          req.fields[k] = value;
+          part = MultipartFile.fromBytes(field, value,
+              contentType: contentType, filename: filename);
         }
-        if (part != null) {
-          req.files.add(part);
-        }
+        req.files.add(part);
       }
       request.httpRequest = req;
     } else if (request.headers.isContentJson) {

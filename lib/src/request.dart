@@ -62,6 +62,7 @@ class AirRequest {
   List<String> _pathAppendParams = [];
   List<Interceptor> _interceptors = [];
   List<HttpProcessor> _processors = [];
+  List<_AirMultiFilePart> _multipart = [];
 
   AirRequest.fromUrl(this.url, Map<String, dynamic>? params)
       : _params = params ?? {};
@@ -86,6 +87,8 @@ class AirRequest {
 
   Map<String, dynamic> getPathParams() => _pathParams;
 
+  List<_AirMultiFilePart> getMultipartParams() => _multipart;
+
   List<String> getPathAppends() => _pathAppendParams;
 
   List<Interceptor> getInterceptors() => _interceptors;
@@ -103,7 +106,7 @@ class AirRequest {
   ///     return _loginUrl.http().pathParams({'userId': userId}).get();
   ///   }
   /// ```
-  AirRequest pathParams(Map<String, dynamic> params) {
+  AirRequest addPathParams(Map<String, dynamic> params) {
     _pathParams.addAll(params);
     return this;
   }
@@ -119,7 +122,7 @@ class AirRequest {
   ///     return _loginUrl.http().pathParam('userId', userId).get();
   ///   }
   /// ```
-  AirRequest pathParam(String key, dynamic value) {
+  AirRequest addPathParam(String key, dynamic value) {
     if (!url.contains('@')) {
       assert(
           false,
@@ -132,7 +135,7 @@ class AirRequest {
   }
 
   /// Append a param to the end of url
-  AirRequest pathAppends(param) {
+  AirRequest addPathAppends(param) {
     if (param == null) {
       return this;
     }
@@ -141,14 +144,41 @@ class AirRequest {
   }
 
   /// Add a param to the request
-  AirRequest param(String key, dynamic value) {
+  AirRequest addParam(String key, dynamic value) {
     _params[key] = value;
     return this;
   }
 
   /// Add some params to the request
-  AirRequest params(Map<String, dynamic> params) {
+  AirRequest addParams(Map<String, dynamic> params) {
     _params.addAll(params);
+    return this;
+  }
+
+  AirRequest addMultipart(String field, dynamic value,
+      [String? name, String? contentType]) {
+    var part = _AirMultiFilePart(value,
+        fieldName: field, filename: name, contentType: contentType);
+    _multipart.add(part);
+    return this;
+  }
+
+  AirRequest addMultipartMap(Map<String, dynamic> map) {
+    map.forEach((key, value) {
+      var part;
+      if (value is File || value is List<int>) {
+        part = _AirMultiFilePart(
+          value,
+          fieldName: key,
+        );
+      } else if (value is _AirMultiFilePart) {
+        if (value.fieldName?.isEmpty ?? true) {
+          value.fieldName = key;
+        }
+        part = value;
+      }
+      _multipart.add(part);
+    });
     return this;
   }
 
@@ -228,13 +258,13 @@ class DownloadRequest extends AirRequest {
       : super.fromUrl(url, params);
 }
 
-class AirMultiFilePart {
+class _AirMultiFilePart {
   String? contentType;
   String? filename;
   String? fieldName;
   dynamic value;
 
-  AirMultiFilePart(this.value,
+  _AirMultiFilePart(this.value,
       {this.fieldName, this.filename, this.contentType});
 }
 
