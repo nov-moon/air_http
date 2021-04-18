@@ -224,7 +224,19 @@ class AirRequest {
 
   @override
   String toString() {
-    return 'AirRequest{url: $url, host: $host, requestType: $requestType, requestTimeout: $requestTimeout, isGzip: $isGzip, uxType: $uxType, requestHolder: $requestHolder, parser: $parser, isMultipart: $isMultipart, encoding: $encoding, method: $method, _headers: $_headers, _params: $_params, _pathParams: $_pathParams, _pathAppendParams: $_pathAppendParams, _interceptors: $_interceptors, _processors: $_processors}';
+    var printUrl = url;
+    if (host != null && !printUrl.isPathHttp) {
+      printUrl = host! + url;
+    }
+    return '''AirRequest{
+    method: $method, url: $printUrl, 
+    _headers: $_headers, 
+    _params: $_params, 
+    _pathParams: $_pathParams, 
+    _pathAppendParams: $_pathAppendParams, 
+    requestType: $requestType, uxType: $uxType, 
+    requestTimeout: $requestTimeout, isGzip: $isGzip, isMultipart: $isMultipart, encoding: $encoding, 
+}''';
   }
 
 //   @override
@@ -299,6 +311,9 @@ class AirRealRequest {
 
   @override
   String toString() {
-    return 'AirRealRequest{raw: $raw, headers: $headers, encoding: $encoding, url: $url, method: $method}';
+    return '''RealRequest{
+  headers: $headers, 
+  raw: $raw, 
+}''';
   }
 }
