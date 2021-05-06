@@ -646,7 +646,13 @@ class _ApiLogResponse extends Interceptor {
 }
 
 void _print(String message) {
-  if (message.length > 12 * 1024) {
+  int maxLength = 1024;
+  if (message.length > maxLength) {
+    while(message.length > maxLength) {
+      String tempMessage = message.substring(0,maxLength);
+      message = message.replaceFirst(tempMessage,'');
+      print(tempMessage);
+    }
     print(message);
   } else {
     debugPrint(message);
