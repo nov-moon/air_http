@@ -632,7 +632,11 @@ class _ApiLogResponse extends Interceptor {
         if (response is AirRealResponse) {
           final jsonResult = response.dataRaw.toString();
 //          final jsonResult = encoder.convert(response.dataRaw);
-          _print(response.toFormatString(jsonResult));
+//           _print(response.toFormatString(jsonResult));
+          assert(() {
+            _convert(response.dataMap, 1, isObject: true);
+            return true;
+          }());
         } else {
           _print(response.toString());
         }
@@ -646,15 +650,103 @@ class _ApiLogResponse extends Interceptor {
 }
 
 void _print(String message) {
-  int maxLength = 1024;
+  int maxLength = 900;
   if (message.length > maxLength) {
-    while(message.length > maxLength) {
-      String tempMessage = message.substring(0,maxLength);
-      message = message.replaceFirst(tempMessage,'');
+    while (message.length > maxLength) {
+      String tempMessage = message.substring(0, maxLength);
+      message = message.replaceFirst(tempMessage, '');
       print(tempMessage);
     }
     print(message);
   } else {
     debugPrint(message);
   }
+}
+
+/// [object]  解析的对象
+/// [deep]  递归的深度，用来获取缩进的空白长度
+/// [isObject] 用来区分当前map或list是不是来自某个字段，则不用显示缩进。单纯的map或list需要添加缩进
+String _convert(dynamic object, int deep, {bool isObject = false, String name = ''}) {
+  var buffer = StringBuffer();
+  var nextDeep = deep + 1;
+  if (object is Map) {
+    var list = object.keys.toList();
+    if (!isObject) {
+      //如果map来自某个字段，则不需要显示缩进
+      buffer.write("${getDeepSpace(deep)}");
+    }
+    buffer.write(name + "{");
+    if (list.isEmpty) {
+      //当map为空，直接返回‘}’
+      buffer.write("}");
+    } else {
+      // buffer.write("\n");
+      _print(buffer.toString());
+      buffer.clear();
+      for (int i = 0; i < list.length; i++) {
+        // buffer.write("${getDeepSpace(nextDeep)}\"${list[i]}\":-");
+
+        buffer.write(_convert(object[list[i]], nextDeep, name: '${list[i]}: '));
+        if (i < list.length - 1) {
+          buffer.write(",");
+          // buffer.write("\n");
+          _print(buffer.toString());
+          buffer.clear();
+        }
+      }
+      // buffer.write("\n");
+      buffer.clear();
+      buffer.write("${getDeepSpace(deep)}}");
+      _print(buffer.toString());
+    }
+  } else if (object is List) {
+    if (!isObject) {
+      //如果list来自某个字段，则不需要显示缩进
+      buffer.write("${getDeepSpace(deep)}");
+    }
+    buffer.write("$name[");
+    if (object.isEmpty) {
+      //当list为空，直接返回‘]’
+      buffer.write("]");
+    } else {
+      // buffer.write("\n");
+      _print(buffer.toString());
+      buffer.clear();
+      for (int i = 0; i < object.length; i++) {
+        buffer.write(_convert(object[i], nextDeep));
+        if (i < object.length - 1) {
+          buffer.write(",");
+          // buffer.write("\n");
+          _print(buffer.toString());
+          buffer.clear();
+        }
+      }
+      // buffer.write("\n");
+      buffer.clear();
+      buffer.write("${getDeepSpace(deep)}]");
+      _print(buffer.toString());
+    }
+  } else if (object is String) {
+    buffer.write("${getDeepSpace(deep)}");
+    //为字符串时，需要添加双引号并返回当前内容
+    buffer.write("$name\"$object\"");
+  } else if (object is num || object is bool) {
+    buffer.write("${getDeepSpace(deep)}");
+    //为数字或者布尔值时，返回当前内容
+    buffer.write("$name$object");
+  } else {
+    buffer.write("${getDeepSpace(deep)}");
+    //如果对象为空，则返回null字符串
+    buffer.write("$name null");
+  }
+  return buffer.toString();
+}
+
+///获取缩进空白符
+String getDeepSpace(int deep) {
+  var tab = StringBuffer();
+  for (int i = 0; i < deep; i++) {
+    tab.write("  ");
+  }
+  return tab.toString();
 }
