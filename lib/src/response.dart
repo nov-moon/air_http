@@ -70,7 +70,7 @@ abstract class AirResponse {
 abstract class AirApiResponse extends AirResponse {
   String statusCode = '';
 
-  Map<String, dynamic> get dataMap;
+  Map<dynamic, dynamic> get dataMap;
 
   List<dynamic> get dataList;
 
@@ -102,9 +102,19 @@ abstract class AirApiResponse extends AirResponse {
 }
 
 class AirRealResponse extends AirApiResponse with ExceptionResponseMixin {
-  Map<String, dynamic> get dataMap => dataRaw as Map<String, dynamic>;
+  Map<dynamic, dynamic> get dataMap {
+    if(dataRaw is Map<dynamic, dynamic>){
+      return dataRaw as Map<dynamic, dynamic>;
+    }
+    return {};
+  }
 
-  List<dynamic> get dataList => dataRaw as List<dynamic>;
+  List<dynamic> get dataList {
+    if(dataRaw is List<dynamic>) {
+      return dataRaw as List<dynamic>;
+    }
+    return [];
+  }
 
   @override
   String toString() {
