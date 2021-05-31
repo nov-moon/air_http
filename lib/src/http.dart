@@ -119,6 +119,7 @@ class AirHttp with _AirHttpMixin {
 
   AirHttp._withRequest(AirRequest request) {
     _request = request;
+    _request.requestTimeout = requestTimeout;
   }
 
 // static void _onAppStop() {
