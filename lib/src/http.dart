@@ -667,7 +667,8 @@ void _print(String message) {
 /// [object]  解析的对象
 /// [deep]  递归的深度，用来获取缩进的空白长度
 /// [isObject] 用来区分当前map或list是不是来自某个字段，则不用显示缩进。单纯的map或list需要添加缩进
-String _convert(dynamic object, int deep, {bool isObject = false, String name = ''}) {
+String _convert(dynamic object, int deep,
+    {bool isObject = false, String name = ''}) {
   var buffer = StringBuffer();
   var nextDeep = deep + 1;
   if (object is Map) {
@@ -688,7 +689,7 @@ String _convert(dynamic object, int deep, {bool isObject = false, String name = 
         // buffer.write("${getDeepSpace(nextDeep)}\"${list[i]}\":-");
 
         buffer.write(_convert(object[list[i]], nextDeep, name: '${list[i]}: '));
-        if (i < list.length - 1) {
+        if (i < list.length) {
           buffer.write(",");
           // buffer.write("\n");
           _print(buffer.toString());
