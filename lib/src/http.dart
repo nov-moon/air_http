@@ -635,7 +635,7 @@ class _ApiLogResponse extends Interceptor {
 //          final jsonResult = encoder.convert(response.dataRaw);
 //           _print(response.toFormatString(jsonResult));
           assert(() {
-            _convert(response.dataMap, 1, isObject: true);
+            _print(_convert(response.dataMap, 1, isObject: true));
             return true;
           }());
         } else {
@@ -699,7 +699,6 @@ String _convert(dynamic object, int deep,
       // buffer.write("\n");
       buffer.clear();
       buffer.write("${getDeepSpace(deep)}}");
-      _print(buffer.toString());
     }
   } else if (object is List) {
     if (!isObject) {
@@ -716,7 +715,7 @@ String _convert(dynamic object, int deep,
       buffer.clear();
       for (int i = 0; i < object.length; i++) {
         buffer.write(_convert(object[i], nextDeep));
-        if (i < object.length - 1) {
+        if (i < object.length) {
           buffer.write(",");
           // buffer.write("\n");
           _print(buffer.toString());
@@ -726,7 +725,6 @@ String _convert(dynamic object, int deep,
       // buffer.write("\n");
       buffer.clear();
       buffer.write("${getDeepSpace(deep)}]");
-      _print(buffer.toString());
     }
   } else if (object is String) {
     buffer.write("${getDeepSpace(deep)}");
