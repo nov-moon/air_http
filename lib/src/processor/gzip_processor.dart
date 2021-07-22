@@ -38,10 +38,11 @@ class GzipProcessor implements HttpProcessor {
     if (response.headers.containsKeyIgnoreCase('Content-Encoding')) {
       final value = response.headers.getValueIgnoreCase('Content-Encoding');
       if (value?.contains("gzip") ?? false) {
-        try{
+        try {
           response.bodyBytes = gzip.decode(response.bodyBytes);
-        }catch(e){
-          print('++++++++'+ String.fromCharCodes(response.bodyBytes));
+        } catch (e) {
+          print(' e = $e');
+          print('++++++++' + String.fromCharCodes(response.bodyBytes));
         }
       }
     }
