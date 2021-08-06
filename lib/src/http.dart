@@ -43,6 +43,9 @@ class AirHttp with _AirHttpMixin {
   /// exception处理器
   static Function(dynamic exception)? onExceptionOccurred;
 
+  /// 配置Proxy {'http_proxy':'http://192.168.124.7:8888'}
+  static Map<String, String>? proxyEnv;
+
   /// 拦截request
   static set interceptRequest(InterceptorRequestType value) {
     _baseInterceptorWrap._baseInterceptRequest = value;
