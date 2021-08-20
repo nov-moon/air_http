@@ -628,13 +628,13 @@ class _ApiLogRequest extends Interceptor {
 
 class _ApiLogResponse extends Interceptor {
   //带有首行缩进的Json格式
-  static JsonEncoder encoder = JsonEncoder.withIndent('  ');
+  // static JsonEncoder encoder = JsonEncoder.withIndent('  ');
 
   Future<AirResponse> interceptResponse(AirResponse response) async {
     assert(() {
       try {
         if (response is AirRealResponse) {
-          final jsonResult = response.dataRaw.toString();
+          // final jsonResult = response.dataRaw.toString();
 //          final jsonResult = encoder.convert(response.dataRaw);
 //           _print(response.toFormatString(jsonResult));
           assert(() {
