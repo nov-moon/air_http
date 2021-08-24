@@ -84,6 +84,6 @@ class RequestBodyProcessor implements HttpProcessor {
 
 extension on Map<String, dynamic> {
   bool get isContentJson =>
-      this['Content-Type'] != null &&
-      this['Content-Type'].toString().toLowerCase() == "application/json";
+      this[HttpHeaders.contentTypeHeader] != null &&
+      this[HttpHeaders.contentTypeHeader].toString().toLowerCase() == "application/json";
 }

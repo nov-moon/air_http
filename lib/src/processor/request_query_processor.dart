@@ -30,7 +30,7 @@ class RequestQueryProcessor implements HttpProcessor {
       raw.getParams().forEach((key, value) {
         paramUrl += "$key=$value&";
       });
-      paramUrl = paramUrl.substring(0, paramUrl.length);
+      paramUrl = paramUrl.substring(0, paramUrl.length - 1);
     }
     request.url = paramUrl;
     var contentHeader = request.headers[HttpHeaders.contentTypeHeader];
