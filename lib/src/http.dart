@@ -498,9 +498,10 @@ mixin HttpMixin {
   Future<AirApiResponse> httpGet(String url,
       [Map<String, dynamic>? params,
       int? uxType = 1,
-      bool? isThrowException]) async {
+      bool? isThrowException, int? requestType]) async {
     AirRequest request = http(url, params);
     request.uxType = uxType;
+    request.requestType = requestType??0;
     request.isThrowException = isThrowException;
     request.requestHolder = this;
     onCreateRequest(request);
