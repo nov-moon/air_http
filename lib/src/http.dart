@@ -140,10 +140,10 @@ mixin _AirHttpMixin {
   late AirRequest _request;
 
   /// Send a request by the 'POST' method.
-  Future<AirApiResponse> post() async {
+  Future<AirApiResponse> post({bool ignoreError = false}) async {
     final request = await _buildRequest(Method.POST);
 
-    return await _method(request) as AirApiResponse;
+    return await _method(request, ignoreError: ignoreError) as AirApiResponse;
   }
 
   /// Send a request by the 'GET' method.
@@ -208,7 +208,8 @@ mixin _AirHttpMixin {
     return request;
   }
 
-  Future<AirResponse> _method(AirRequest request) async {
+  Future<AirResponse> _method(AirRequest request,
+      {bool ignoreError = false}) async {
     List<HttpProcessor> processors = [];
     processors.addAll(request.getProcessors());
     processors.addAll(AirHttp.processors);
@@ -234,7 +235,8 @@ mixin _AirHttpMixin {
         return _defaultDownloadParser(response, request);
       }
       // 正常请求的处理
-      final result = await _defaultResponseParser(response, request);
+      final result = await _defaultResponseParser(response, request,
+          ignoreError: ignoreError);
       result.request = request;
       result.httpCode = response.httpCode;
       result.headers = response.headers;
@@ -280,7 +282,8 @@ mixin _AirHttpMixin {
   }
 
   Future<AirApiResponse> _defaultResponseParser(
-      AirRawResponse response, AirRequest request) async {
+      AirRawResponse response, AirRequest request,
+      {bool ignoreError = false}) async {
     final map = jsonDecode(response.body);
     final result = AirRealResponse();
     if (map == null) {
@@ -290,8 +293,9 @@ mixin _AirHttpMixin {
     var parser = request.parser!;
     var httpCode = response.httpCode;
     var header = response.headers;
-    result.success =
-        parser.isSuccess(httpCode, header, request, map, requestType);
+    result.success = ignoreError
+        ? true
+        : parser.isSuccess(httpCode, header, request, map, requestType);
     result.statusCode =
         parser.parseStatusCode(httpCode, header, request, map, requestType);
     result.message =
@@ -463,15 +467,21 @@ mixin HttpMixin {
       {Map<String, dynamic>? params,
       required Map<String, dynamic> multipart,
       int? uxType = 1,
-      bool? isThrowException}) async {
+      bool? isThrowException,
+      Map<String, dynamic>? headers,
+      bool ignoreError = false}) async {
     AirRequest request = http(url, params);
     request.uxType = uxType;
+    if (headers != null && headers.isNotEmpty) {
+      request.addHeaders(headers);
+    }
     request.isThrowException = isThrowException;
     request.requestHolder = this;
     request.isMultipart = true;
     request.addMultipartMap(multipart);
     onCreateRequest(request);
-    var result = await AirHttp._withRequest(request).post();
+    var result =
+        await AirHttp._withRequest(request).post(ignoreError: ignoreError);
     onResponseComplete(result);
     return result;
   }
@@ -498,10 +508,11 @@ mixin HttpMixin {
   Future<AirApiResponse> httpGet(String url,
       [Map<String, dynamic>? params,
       int? uxType = 1,
-      bool? isThrowException, int? requestType]) async {
+      bool? isThrowException,
+      int? requestType]) async {
     AirRequest request = http(url, params);
     request.uxType = uxType;
-    request.requestType = requestType??0;
+    request.requestType = requestType ?? 0;
     request.isThrowException = isThrowException;
     request.requestHolder = this;
     onCreateRequest(request);
