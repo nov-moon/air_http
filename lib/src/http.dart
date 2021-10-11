@@ -69,7 +69,7 @@ class AirHttp with _AirHttpMixin {
   /// 管理请求处理配置
   static List<HttpProcessor> processors = [];
 
-  /// 默认请求超时时间
+  /// 默认请求超时时间 毫秒
   static int requestTimeout = 60 * 1000;
 
   /// 是否开启gzip
