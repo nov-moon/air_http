@@ -50,7 +50,7 @@ class EmitterProcessor implements HttpProcessor {
             throw AirHttpException(message: 'Invalid request body "$body".');
           }
         }
-        responseRaw = await client.send(req).timeout(Duration(milliseconds: AirHttp.requestTimeout));
+        responseRaw = await client.send(req);
       }
     } finally {
       // request.close();

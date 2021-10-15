@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -71,6 +72,8 @@ class AirHttp with _AirHttpMixin {
 
   /// 默认请求超时时间 毫秒
   static int requestTimeout = 60 * 1000;
+
+  static String requestTimeoutMsg = 'request time out!';
 
   /// 是否开启gzip
   static bool isRequestGzip = false;
@@ -229,8 +232,10 @@ mixin _AirHttpMixin {
 
     ProcessorNode node = _ProcessorNodeImpl(processors, 0, rawReq);
 
+    int timeout = request.requestTimeout ?? AirHttp.requestTimeout;
+
     AirResponse resultResp =
-        await node.process(node.request).then((response) async {
+        await node.process(node.request).timeout(Duration(milliseconds: timeout)).then((response) async {
       if (request is DownloadRequest) {
         return _defaultDownloadParser(response, request);
       }
@@ -245,6 +250,8 @@ mixin _AirHttpMixin {
       // 发生AirHttpException类型错误时的处理
       if (exception is AirHttpException) {
         return _processError(exception, stack, request);
+      }else if(exception is TimeoutException){
+        return _processTimeoutError(exception, stack, request);
       }
       // 发生其他类型错误时的处理
 
@@ -367,6 +374,34 @@ mixin _AirHttpMixin {
     } else {
       result.message = exception.toString();
     }
+    if (result is AirRealResponse) {
+      if (result.exception == null) result.exception = exception;
+      if (result.exceptionStack == null) result.exceptionStack = stack;
+    }
+    if (result is AirRealResponse) {
+      if (result.exception == null) result.exception = exception;
+      if (result.exceptionStack == null) result.exceptionStack = stack;
+    } else if (result is DownloadResponse) {
+      if (result.exception == null) result.exception = exception;
+      if (result.exceptionStack == null) result.exceptionStack = stack;
+    }
+
+    return result;
+  }
+
+
+  Future<AirResponse> _processTimeoutError(
+      dynamic exception, dynamic stack, AirRequest request) async {
+    late AirResponse result;
+    if (request is DownloadRequest) {
+      result = DownloadResponse();
+    } else {
+      result = AirRealResponse();
+    }
+    result.request = request;
+    result.httpCode = -1;
+    result.message = AirHttp.requestTimeoutMsg;
+
     if (result is AirRealResponse) {
       if (result.exception == null) result.exception = exception;
       if (result.exceptionStack == null) result.exceptionStack = stack;
