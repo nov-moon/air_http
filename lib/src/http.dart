@@ -27,6 +27,8 @@ typedef InterceptorResponseType = Future<AirResponse> Function(
 
 typedef ResponseParserFactory = AirResponseParser Function(int requestType);
 
+typedef TimeOutStringBuilder = String Function();
+
 class AirHttp with _AirHttpMixin {
   static AirDefaultParser _defaultParser = AirDefaultParser();
 
@@ -73,7 +75,7 @@ class AirHttp with _AirHttpMixin {
   /// 默认请求超时时间 毫秒
   static int requestTimeout = 60 * 1000;
 
-  static String requestTimeoutMsg = 'request time out!';
+  static TimeOutStringBuilder requestTimeoutMsg = () =>'request time out!';
 
   /// 是否开启gzip
   static bool isRequestGzip = false;
@@ -400,7 +402,7 @@ mixin _AirHttpMixin {
     }
     result.request = request;
     result.httpCode = -1;
-    result.message = AirHttp.requestTimeoutMsg;
+    result.message = AirHttp.requestTimeoutMsg();
 
     if (result is AirRealResponse) {
       if (result.exception == null) result.exception = exception;
