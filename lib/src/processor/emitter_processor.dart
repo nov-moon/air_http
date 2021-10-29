@@ -9,13 +9,17 @@ import 'package:air_http/src/response.dart';
 import 'package:http/http.dart';
 import 'package:http/io_client.dart';
 
+import '../http_utils.dart';
+
 /// 真正的请求发射位置
 class EmitterProcessor implements HttpProcessor {
   @override
   Future<AirRawResponse> process(ProcessorNode node) async {
     var request = node.request;
     var client = request.httpClient = Client();
-
+    if (AirHttp.ignoreSSL) {
+      client = request.httpClient = HttpUtils.getClient();
+    }
     if (AirHttp.proxyEnv != null) {
       // 配置代理，为了Charles抓包使用；参考 https://cloud.tencent.com/developer/article/1740037
       final httpC = HttpClient();

@@ -9,7 +9,6 @@ import 'package:air_http/src/processor/gzip_processor.dart';
 import 'package:air_http/src/processor/pre_processor.dart';
 import 'package:flutter/foundation.dart';
 
-import 'http_utils.dart';
 import 'inspector.dart';
 import 'methods.dart';
 import 'processor/emitter_processor.dart';
@@ -50,6 +49,9 @@ class AirHttp with _AirHttpMixin {
   /// 配置Proxy {'http_proxy':'http://192.168.124.7:8888'}
   static Map<String, String>? proxyEnv;
 
+  /// ssl证书问题解决，是否忽略证书校验
+  static bool ignoreSSL = false;
+
   /// 拦截request
   static set interceptRequest(InterceptorRequestType value) {
     _baseInterceptorWrap._baseInterceptRequest = value;
@@ -76,7 +78,7 @@ class AirHttp with _AirHttpMixin {
   /// 默认请求超时时间 毫秒
   static int requestTimeout = 60 * 1000;
 
-  static TimeOutStringBuilder requestTimeoutMsg = () =>'request time out!';
+  static TimeOutStringBuilder requestTimeoutMsg = () => 'request time out!';
 
   /// 是否开启gzip
   static bool isRequestGzip = false;
@@ -258,9 +260,7 @@ mixin _AirHttpMixin {
       } else if (exception is TimeoutException) {
         return _processTimeoutError(exception, stack, request);
       } else if (exception is HandshakeException) {
-        node.request.httpClient = HttpUtils.getClient();
-        return await _method(request, ignoreError: ignoreError)
-            as AirApiResponse;
+        AirHttp.ignoreSSL = true;
       }
 
       // 发生其他类型错误时的处理
