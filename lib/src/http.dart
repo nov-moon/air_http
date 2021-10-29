@@ -9,6 +9,7 @@ import 'package:air_http/src/processor/gzip_processor.dart';
 import 'package:air_http/src/processor/pre_processor.dart';
 import 'package:flutter/foundation.dart';
 
+import 'http_utils.dart';
 import 'inspector.dart';
 import 'methods.dart';
 import 'processor/emitter_processor.dart';
@@ -236,8 +237,10 @@ mixin _AirHttpMixin {
 
     int timeout = request.requestTimeout ?? AirHttp.requestTimeout;
 
-    AirResponse resultResp =
-        await node.process(node.request).timeout(Duration(milliseconds: timeout)).then((response) async {
+    AirResponse resultResp = await node
+        .process(node.request)
+        .timeout(Duration(milliseconds: timeout))
+        .then((response) async {
       if (request is DownloadRequest) {
         return _defaultDownloadParser(response, request);
       }
@@ -252,9 +255,14 @@ mixin _AirHttpMixin {
       // 发生AirHttpException类型错误时的处理
       if (exception is AirHttpException) {
         return _processError(exception, stack, request);
-      }else if(exception is TimeoutException){
+      } else if (exception is TimeoutException) {
         return _processTimeoutError(exception, stack, request);
+      } else if (exception is HandshakeException) {
+        node.request.httpClient = HttpUtils.getClient();
+        return await _method(request, ignoreError: ignoreError)
+            as AirApiResponse;
       }
+
       // 发生其他类型错误时的处理
 
       return _processOtherError(exception, stack, request);
@@ -390,7 +398,6 @@ mixin _AirHttpMixin {
 
     return result;
   }
-
 
   Future<AirResponse> _processTimeoutError(
       dynamic exception, dynamic stack, AirRequest request) async {
