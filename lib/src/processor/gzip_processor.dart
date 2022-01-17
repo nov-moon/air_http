@@ -41,8 +41,8 @@ class GzipProcessor implements HttpProcessor {
         try {
           response.bodyBytes = gzip.decode(response.bodyBytes);
         } catch (e) {
-          print(' e = $e');
-          print('++++++++' + String.fromCharCodes(response.bodyBytes));
+          dPrint(' e = $e');
+          dPrint('++++++++' + String.fromCharCodes(response.bodyBytes));
         }
       }
     }

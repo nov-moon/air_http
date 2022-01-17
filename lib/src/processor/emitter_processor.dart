@@ -30,7 +30,7 @@ class EmitterProcessor implements HttpProcessor {
       client = request.httpClient = IOClient(httpC);
     }
 
-    print('air_http: request -> $request');
+    dPrint('air_http: request -> $request');
     StreamedResponse responseRaw;
     try {
       if (request.httpRequest != null) {
